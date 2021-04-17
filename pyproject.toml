@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "text-embeddings"
+version = "0.0.1"
+description = "Non-traditional/no-vocabulary text embeddings in one place."
+authors = ["Chenghao Mou <mouchenghao@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Pillow = "^8.2.0"
+pytest = "^6.2.3"
+torch = "^1.8.1"
+transformers = "^4.5.1"
+numpy = "^1.20.2"
+coverage = "^5.5"
+coverage-badge = "^1.0.1"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^20.8b1", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
