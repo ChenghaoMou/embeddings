@@ -229,7 +229,7 @@ class PQRNNTokenizer(PreTrainedTokenizerBase):
             sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
             token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
         else:
-            sequence = ids + pair_ids if pair else ids
+            sequence = np.concatenate([ids, pair_ids], axis=0) if pair is True else ids
             token_type_ids = [0] * len(ids) + ([0] * len(pair_ids) if pair else [])
         
         # Build output dictionary

@@ -21,7 +21,18 @@ def test_text2image(text: str):
         # img.show()
         img.save(tmp.name)
 
-def test_vtr_tokenizer():
+@pytest.mark.parametrize(
+    ('text_pair', 'add_special_tokens', 'stride', 'padding', 'truncation', 'return_attention_mask', 'return_special_tokens_mask', 'return_length'), [
+        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, True),
+        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, False),
+        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
+        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, False, True, True),
+        (True, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
+        (False, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
+        # (True, True, 5, PaddingStrategy.DO_NOT_PAD, TruncationStrategy.LONGEST_FIRST, True, True, True),
+    ]
+)
+def test_vtr_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, padding, truncation, return_attention_mask, return_special_tokens_mask, return_length):
 
     data = [
         "Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world! Hello world!",
@@ -35,17 +46,18 @@ def test_vtr_tokenizer():
         font="~/Library/Fonts/NotoSansDisplay-Regular.ttf",
         max_length=36
     )
+
     results = embedder(
         text=data,
-        text_pair=data,
-        add_special_tokens=True,
-        stride=5,
-        padding=PaddingStrategy.LONGEST, 
+        text_pair=data if text_pair else None,
+        add_special_tokens=add_special_tokens,
+        stride=stride,
+        padding=padding, 
         return_tensors='pt',
-        truncation=TruncationStrategy.LONGEST_FIRST, 
-        return_attention_mask=True, 
-        return_special_tokens_mask=True,
-        return_length=True,
+        truncation=truncation,
+        return_attention_mask=return_attention_mask, 
+        return_special_tokens_mask=return_special_tokens_mask,
+        return_length=return_length,
         prepend_batch_axis=True,
         return_overflowing_tokens=False,
     )
@@ -53,7 +65,13 @@ def test_vtr_tokenizer():
     sequence_length = results["input_ids"].shape[1]
 
     assert sequence_length <= embedder.max_length
-    assert results["special_tokens_mask"].shape == (3, sequence_length)
-    assert results["input_ids"].shape == (3, sequence_length, 19, 10) # hight is slightly different because of the font
-    assert results["length"].shape == (3, )
+    if return_special_tokens_mask and add_special_tokens:
+        assert results["special_tokens_mask"].shape == (3, sequence_length)
+
+    if add_special_tokens:
+        assert results["input_ids"].shape == (3, sequence_length, 19, 10) # hight is slightly different because of the font
+    else:
+        assert results["input_ids"].shape == (3, sequence_length, 15, 10) # hight is slightly different because of the font
+    if return_length:
+        assert results["length"].shape == (3, )
     assert results["token_type_ids"].shape == (3, sequence_length)

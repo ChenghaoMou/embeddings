@@ -14,7 +14,7 @@ from transformers.tokenization_utils_base import *
 from itertools import zip_longest
 from numpy.lib.stride_tricks import sliding_window_view
 
-def _is_torch(x):
+def _is_torch(x): # pragma: no
     import torch
 
     return isinstance(x, torch.Tensor)
@@ -162,7 +162,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
                 if key not in batch_outputs:
                     batch_outputs[key] = []
                 batch_outputs[key].append(value)
-
+                print(key, np.asarray(value).shape)
         
         batch_outputs = self.pad(
             batch_outputs,
@@ -171,7 +171,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
             pad_to_multiple_of=pad_to_multiple_of,
             return_attention_mask=return_attention_mask,
         )
-
+        
         batch_outputs = BatchEncoding(batch_outputs, tensor_type=return_tensors)
 
         return batch_outputs
@@ -225,7 +225,6 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         pair = bool(pair_ids is not None)
         len_ids = len(ids)
         len_pair_ids = len(pair_ids) if pair else 0
-
         if return_token_type_ids and not add_special_tokens:
             raise ValueError(
                 "Asking to return token_type_ids while setting add_special_tokens to False "
@@ -264,9 +263,9 @@ class VTRTokenizer(PreTrainedTokenizerBase):
             sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
             token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
         else:
-            sequence = ids + pair_ids if pair else ids
+            sequence = np.concatenate([ids, pair_ids], axis=0) if pair is True else ids
             token_type_ids = [0] * len(ids) + ([0] * len(pair_ids) if pair else [])
-        
+    
         # Build output dictionary
         encoded_inputs["input_ids"] = sequence
 
@@ -291,7 +290,6 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         if return_length:
             encoded_inputs["length"] = len(encoded_inputs["input_ids"])
 
-        
         batch_outputs = BatchEncoding(
             encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis
         )
@@ -333,7 +331,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         return [1 for _ in self.special_tokens["CLS"]] + [0 for _ in token_ids_0] + [1 for _ in self.special_tokens["SEP"]] + [0 for _ in token_ids_1] + [1 for _ in self.special_tokens["SEP"]]
     
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
+        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, add_special_tokens: bool = True
     ) -> List[int]:
 
         if token_ids_1 is None:
@@ -422,7 +420,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         if padding == PaddingStrategy.LONGEST:
             max_length = max(len(inputs) for inputs in required_input)
             padding = PaddingStrategy.MAX_LENGTH
-
+        
         batch_outputs = {}
         for i in range(batch_size):
             inputs = dict((k, v[i]) for k, v in encoded_inputs.items())
@@ -451,11 +449,11 @@ class VTRTokenizer(PreTrainedTokenizerBase):
     ) -> dict:
 
         # Load from model defaults
+        
         if return_attention_mask is None:
             return_attention_mask = "attention_mask" in self.model_input_names
 
         required_input = encoded_inputs[self.model_input_names[0]]
-
         if padding_strategy == PaddingStrategy.LONGEST:
             max_length = len(required_input)
 
@@ -482,7 +480,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
                 if return_attention_mask:
                     encoded_inputs["attention_mask"] = [0] * difference + [1] * len(required_input)
                 if "token_type_ids" in encoded_inputs:
-                    encoded_inputs["token_type_ids"] = [1] * difference + encoded_inputs[
+                    encoded_inputs["token_type_ids"] = [0] * difference + encoded_inputs[
                         "token_type_ids"
                     ]
                 if "special_tokens_mask" in encoded_inputs:

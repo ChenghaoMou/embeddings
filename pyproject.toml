@@ -15,6 +15,7 @@ numpy = "^1.20.2"
 coverage = "^5.5"
 coverage-badge = "^1.0.1"
 mmh3 = "^3.0.0"
+icecream = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^20.8b1", allow-prereleases = true}
