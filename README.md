@@ -3,12 +3,24 @@
 
 ## Embeddings
 
-- [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
+- [x] [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
+```python
+from text_embeddings.visual import VTRTokenizer
+```
+- [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
+```python
+from text_embeddings.hash import PQRNNTokenizer
+```
+- [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
+```python
+from text_embeddings.hash import CANINETokenizer
+```
 
 ## TODO
 
-- Word-level LSH Embeddings (PRADO/PQRNN)
-- Char-level Hash Embeddings (CANINE)
+- [ ] **If you find an interesting embedding method, please consider creating an issue or a PR!**
+- [ ] Documentation
+- [ ] Better abstraction and extensibility
 
 ## Installation
 ```bash
