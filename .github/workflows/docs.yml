@@ -34,15 +34,15 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        run: python3 -m pip install poetry pdoc3
+        run: python3 -m pip install poetry; poetry export -o requirements.txt --without-hashes
       
       - name: Install rest of the dependencies
-        run: poetry install
+        run: python3 -m pip install -r requirements.txt
 
-      - run: pdoc --html text_embeddings
+      - run: pdoc --html text_embeddings --output-dir docs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html
+          publish_dir: ./docs/text_embeddings
