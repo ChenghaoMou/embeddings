@@ -1,31 +1,26 @@
 ![banner](./banner.png)
 [![PyPI version](https://badge.fury.io/py/text-embeddings.svg)](https://badge.fury.io/py/text-embeddings) ![Coverage](./coverage.svg)
 
-## Embeddings
+## Features
 
-- [x] [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
-```python
-from text_embeddings.visual import VTRTokenizer
-```
-- [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
-```python
-from text_embeddings.hash import PQRNNTokenizer
-```
-- [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
-```python
-from text_embeddings.hash import CANINETokenizer
-```
+-   [x] [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
+-   [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
+-   [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
 
 ## TODO
 
-- [ ] **If you find an interesting embedding method, please consider creating an issue or a PR!**
-- [ ] Documentation
-- [ ] Better abstraction and extensibility
+-   [ ] **If you find an interesting embedding method, please consider creating an issue or a PR!**
+-   [ ] Better documentation, abstraction and extensibility
 
 ## Installation
+
 ```bash
 pip install text-embeddings --upgrade
 ```
+
+## Documentation
+
+[Link](https://chenghaomou.github.io/embeddings/)
 
 ## Usage
 
