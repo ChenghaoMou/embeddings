@@ -16,6 +16,7 @@ coverage = "^5.5"
 coverage-badge = "^1.0.1"
 mmh3 = "^3.0.0"
 icecream = "^2.1.0"
+pdoc3 = "^0.9.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^20.8b1", allow-prereleases = true}
