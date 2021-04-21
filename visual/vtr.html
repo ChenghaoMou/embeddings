@@ -77,7 +77,31 @@ def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
 
 
 class VTRTokenizer(PreTrainedTokenizerBase):
+    &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
+    Parameters
+    ----------
+    height : int, optional
+        The height of the font, might be smaller than the actual image height, by default 14
+    width : int, optional
+        The width of the image window, by default 10
+    font : str, optional
+        Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+    model_input_names : List[str], optional
+        Required inputs for the downstream model, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default None
+    max_length : Optional[int], optional
+        Maximum sequence length, by default 25
+    
+    Examples
+    --------
+    &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
+    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+    &gt;&gt;&gt; tokenier = VTRTokenizer()
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
+    &#34;&#34;&#34;
     def __init__(
         self,
         height: int = 14,
@@ -87,31 +111,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
         max_length: Optional[int] = 25,
     ):
-        &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
-        Parameters
-        ----------
-        height : int, optional
-            The height of the font, might be smaller than the actual image height, by default 14
-        width : int, optional
-            The width of the image window, by default 10
-        font : str, optional
-            Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
-        model_input_names : List[str], optional
-            Required inputs for the downstream model, by default None
-        special_tokens : Optional[Dict[str, np.ndarray]], optional
-            Special tokens for the downstream model, by default None
-        max_length : Optional[int], optional
-            Maximum sequence length, by default 25
-        
-        Examples
-        --------
-        &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
-        &gt;&gt;&gt; from transformers.tokenization_utils_base import *
-        &gt;&gt;&gt; tokenier = VTRTokenizer()
-        &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-        &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
-        &#34;&#34;&#34;
         self.height = height
         self.width = width
         self.font = font
@@ -622,70 +622,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
 <span>(</span><span>height: int = 14, width: int = 10, font: str = '~/Library/Fonts/NotoSansDisplay-Regular.ttf', model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Base class for :class:<code>~transformers.PreTrainedTokenizer</code> and :class:<code>~transformers.PreTrainedTokenizerFast</code>.</p>
-<p>Handles shared (mostly boiler plate) methods for those two classes.</p>
-<p>Class attributes (overridden by derived classes)</p>
-<pre><code>- **vocab_files_names** (:obj:&lt;code&gt;Dict\[str, str]&lt;/code&gt;) -- A dictionary with, as keys, the &lt;code&gt;\_\_init\_\_&lt;/code&gt; keyword name of
-  each vocabulary file required by the model, and as associated values, the filename for saving the associated
-  file (string).
-- **pretrained_vocab_files_map** (:obj:&lt;code&gt;Dict\[str, Dict\[str, str]]&lt;/code&gt;) -- A dictionary of dictionaries, with the
-  high-level keys being the &lt;code&gt;\_\_init\_\_&lt;/code&gt; keyword name of each vocabulary file required by the model, the
-  low-level being the :obj:`short-cut-names` of the pretrained models with, as associated values, the
-  :obj:&lt;code&gt;url&lt;/code&gt; to the associated pretrained vocabulary file.
-- **max_model_input_sizes** (:obj:&lt;code&gt;Dict\[str, Optinal\[int]]&lt;/code&gt;) -- A dictionary with, as keys, the
-  :obj:`short-cut-names` of the pretrained models, and as associated values, the maximum length of the sequence
-  inputs of this model, or :obj:&lt;code&gt;None&lt;/code&gt; if the model has no maximum input size.
-- **pretrained_init_configuration** (:obj:&lt;code&gt;Dict\[str, Dict\[str, Any]]&lt;/code&gt;) -- A dictionary with, as keys, the
-  :obj:`short-cut-names` of the pretrained models, and as associated values, a dictionary of specific arguments
-  to pass to the &lt;code&gt;\_\_init\_\_&lt;/code&gt; method of the tokenizer class for this pretrained model when loading the
-  tokenizer with the :meth:`~transformers.tokenization_utils_base.PreTrainedTokenizerBase.from_pretrained`
-  method.
-- **model_input_names** (:obj:&lt;code&gt;List\[str]&lt;/code&gt;) -- A list of inputs expected in the forward pass of the model.
-- **padding_side** (:obj:&lt;code&gt;str&lt;/code&gt;) -- The default value for the side on which the model should have padding
-  applied. Should be :obj:`'right'` or :obj:`'left'`.
-</code></pre>
-<h2 id="args">Args</h2>
-<dl>
-<dt>model_max_length (:obj:<code>int</code>, <code>optional</code>):</dt>
-<dt>The maximum length (in number of tokens) for the inputs to the transformer model. When the tokenizer is</dt>
-<dt>loaded with :meth:<code>~transformers.tokenization_utils_base.PreTrainedTokenizerBase.from_pretrained</code>, this</dt>
-<dt>will be set to the value stored for the associated model in <code>max_model_input_sizes</code> (see above). If no</dt>
-<dt>value is provided, will default to VERY_LARGE_INTEGER (:obj:<code>int(1e30)</code>).</dt>
-<dt><strong><code>padding_side</code></strong></dt>
-<dd>(:obj:<code>str</code>, <code>optional</code>):
-The side on which the model should have padding applied. Should be selected between ['right', 'left'].
-Default value is picked from the class attribute of the same name.</dd>
-</dl>
-<p>model_input_names (:obj:<code>List[string]</code>, <code>optional</code>):
-The list of inputs accepted by the forward pass of the model (like :obj:<code>"token_type_ids"</code> or
-:obj:<code>"attention_mask"</code>). Default value is picked from the class attribute of the same name.
-bos_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token representing the beginning of a sentence. Will be associated to <code>self.bos_token</code> and
-<code>self.bos_token_id</code>.
-eos_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token representing the end of a sentence. Will be associated to <code>self.eos_token</code> and
-<code>self.eos_token_id</code>.
-unk_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token representing an out-of-vocabulary token. Will be associated to <code>self.unk_token</code> and
-<code>self.unk_token_id</code>.
-sep_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token separating two different sentences in the same input (used by BERT for instance). Will be
-associated to <code>self.sep_token</code> and <code>self.sep_token_id</code>.
-pad_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token used to make arrays of tokens the same size for batching purpose. Will then be ignored by
-attention mechanisms or loss computation. Will be associated to <code>self.pad_token</code> and
-<code>self.pad_token_id</code>.
-cls_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token representing the class of the input (used by BERT for instance). Will be associated to
-<code>self.cls_token</code> and <code>self.cls_token_id</code>.
-mask_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A special token representing a masked token (used by masked-language modeling pretraining objectives, like
-BERT). Will be associated to <code>self.mask_token</code> and <code>self.mask_token_id</code>.
-additional_special_tokens (tuple or list of :obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
-A tuple or a list of additional special tokens. Add them here to ensure they won't be split by the
-tokenization process. Will be associated to <code>self.additional_special_tokens</code> and
-<code>self.additional_special_tokens_ids</code>.
-Render the text into a series of image blocks. Reference <a href="https://t.co/l9E6rL8O5p?amp=1">VTR</a></p>
+<div class="desc"><p>Render the text into a series of image blocks. Reference <a href="https://t.co/l9E6rL8O5p?amp=1">VTR</a></p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>height</code></strong> :&ensp;<code>int</code>, optional</dt>
@@ -713,7 +650,31 @@ Render the text into a series of image blocks. Reference <a href="https://t.co/l
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class VTRTokenizer(PreTrainedTokenizerBase):
+    &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
+    Parameters
+    ----------
+    height : int, optional
+        The height of the font, might be smaller than the actual image height, by default 14
+    width : int, optional
+        The width of the image window, by default 10
+    font : str, optional
+        Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+    model_input_names : List[str], optional
+        Required inputs for the downstream model, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default None
+    max_length : Optional[int], optional
+        Maximum sequence length, by default 25
+    
+    Examples
+    --------
+    &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
+    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+    &gt;&gt;&gt; tokenier = VTRTokenizer()
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
+    &#34;&#34;&#34;
     def __init__(
         self,
         height: int = 14,
@@ -723,31 +684,7 @@ Render the text into a series of image blocks. Reference <a href="https://t.co/l
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
         max_length: Optional[int] = 25,
     ):
-        &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
-        Parameters
-        ----------
-        height : int, optional
-            The height of the font, might be smaller than the actual image height, by default 14
-        width : int, optional
-            The width of the image window, by default 10
-        font : str, optional
-            Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
-        model_input_names : List[str], optional
-            Required inputs for the downstream model, by default None
-        special_tokens : Optional[Dict[str, np.ndarray]], optional
-            Special tokens for the downstream model, by default None
-        max_length : Optional[int], optional
-            Maximum sequence length, by default 25
-        
-        Examples
-        --------
-        &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
-        &gt;&gt;&gt; from transformers.tokenization_utils_base import *
-        &gt;&gt;&gt; tokenier = VTRTokenizer()
-        &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-        &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
-        &#34;&#34;&#34;
         self.height = height
         self.width = width
         self.font = font
