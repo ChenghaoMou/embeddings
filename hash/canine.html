@@ -44,15 +44,42 @@ def _is_torch(x):
     return isinstance(x, torch.Tensor)
 
 
-@dataclass
 class CANINETokenizer(PreTrainedTokenizerBase):
+    
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        &#34;&#34;&#34;A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
 
-    hash_size: int = 768
-    model_input_names: Optional[List[str]] = None
-    special_tokens: Optional[Dict[str, np.ndarray]] = None
-    max_length: Optional[int] = 2048
+        Parameters
+        ----------
+        hash_size : int, optional
+            The embedding size of each character, by default 768
+        model_input_names : Optional[List[str]], optional
+            Required input names for the downstream model, by default None
+        special_tokens : Optional[Dict[str, np.ndarray]], optional
+            Special tokens of the downstream model, by default None
+        max_length : Optional[int], optional
+            Maximum character length, by default 2048
 
-    def __post_init__(self):
+        Examples
+        --------
+        &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
+        &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+        &gt;&gt;&gt; tokenier = CANINETokenizer()
+        &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+        &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
+        &#34;&#34;&#34;
+
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+
         if self.model_input_names is None:
             # Assume the model takes BERT-like parameters
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
@@ -75,7 +102,7 @@ class CANINETokenizer(PreTrainedTokenizerBase):
         return_length: bool = False,
         **kwargs,
     ) -&gt; BatchEncoding:
-        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks. Reference paper: https://t.co/l9E6rL8O5p?amp=1
+        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks.
 
         Parameters
         ----------
@@ -496,19 +523,128 @@ class CANINETokenizer(PreTrainedTokenizerBase):
 <span>(</span><span>hash_size: int = 768, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 2048)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>CANINETokenizer(hash_size: int = 768, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 2048)</p></div>
+<div class="desc"><p>Base class for :class:<code>~transformers.PreTrainedTokenizer</code> and :class:<code>~transformers.PreTrainedTokenizerFast</code>.</p>
+<p>Handles shared (mostly boiler plate) methods for those two classes.</p>
+<p>Class attributes (overridden by derived classes)</p>
+<pre><code>- **vocab_files_names** (:obj:&lt;code&gt;Dict\[str, str]&lt;/code&gt;) -- A dictionary with, as keys, the &lt;code&gt;\_\_init\_\_&lt;/code&gt; keyword name of
+  each vocabulary file required by the model, and as associated values, the filename for saving the associated
+  file (string).
+- **pretrained_vocab_files_map** (:obj:&lt;code&gt;Dict\[str, Dict\[str, str]]&lt;/code&gt;) -- A dictionary of dictionaries, with the
+  high-level keys being the &lt;code&gt;\_\_init\_\_&lt;/code&gt; keyword name of each vocabulary file required by the model, the
+  low-level being the :obj:`short-cut-names` of the pretrained models with, as associated values, the
+  :obj:&lt;code&gt;url&lt;/code&gt; to the associated pretrained vocabulary file.
+- **max_model_input_sizes** (:obj:&lt;code&gt;Dict\[str, Optinal\[int]]&lt;/code&gt;) -- A dictionary with, as keys, the
+  :obj:`short-cut-names` of the pretrained models, and as associated values, the maximum length of the sequence
+  inputs of this model, or :obj:&lt;code&gt;None&lt;/code&gt; if the model has no maximum input size.
+- **pretrained_init_configuration** (:obj:&lt;code&gt;Dict\[str, Dict\[str, Any]]&lt;/code&gt;) -- A dictionary with, as keys, the
+  :obj:`short-cut-names` of the pretrained models, and as associated values, a dictionary of specific arguments
+  to pass to the &lt;code&gt;\_\_init\_\_&lt;/code&gt; method of the tokenizer class for this pretrained model when loading the
+  tokenizer with the :meth:`~transformers.tokenization_utils_base.PreTrainedTokenizerBase.from_pretrained`
+  method.
+- **model_input_names** (:obj:&lt;code&gt;List\[str]&lt;/code&gt;) -- A list of inputs expected in the forward pass of the model.
+- **padding_side** (:obj:&lt;code&gt;str&lt;/code&gt;) -- The default value for the side on which the model should have padding
+  applied. Should be :obj:`'right'` or :obj:`'left'`.
+</code></pre>
+<h2 id="args">Args</h2>
+<dl>
+<dt>model_max_length (:obj:<code>int</code>, <code>optional</code>):</dt>
+<dt>The maximum length (in number of tokens) for the inputs to the transformer model. When the tokenizer is</dt>
+<dt>loaded with :meth:<code>~transformers.tokenization_utils_base.PreTrainedTokenizerBase.from_pretrained</code>, this</dt>
+<dt>will be set to the value stored for the associated model in <code>max_model_input_sizes</code> (see above). If no</dt>
+<dt>value is provided, will default to VERY_LARGE_INTEGER (:obj:<code>int(1e30)</code>).</dt>
+<dt><strong><code>padding_side</code></strong></dt>
+<dd>(:obj:<code>str</code>, <code>optional</code>):
+The side on which the model should have padding applied. Should be selected between ['right', 'left'].
+Default value is picked from the class attribute of the same name.</dd>
+</dl>
+<p>model_input_names (:obj:<code>List[string]</code>, <code>optional</code>):
+The list of inputs accepted by the forward pass of the model (like :obj:<code>"token_type_ids"</code> or
+:obj:<code>"attention_mask"</code>). Default value is picked from the class attribute of the same name.
+bos_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token representing the beginning of a sentence. Will be associated to <code>self.bos_token</code> and
+<code>self.bos_token_id</code>.
+eos_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token representing the end of a sentence. Will be associated to <code>self.eos_token</code> and
+<code>self.eos_token_id</code>.
+unk_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token representing an out-of-vocabulary token. Will be associated to <code>self.unk_token</code> and
+<code>self.unk_token_id</code>.
+sep_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token separating two different sentences in the same input (used by BERT for instance). Will be
+associated to <code>self.sep_token</code> and <code>self.sep_token_id</code>.
+pad_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token used to make arrays of tokens the same size for batching purpose. Will then be ignored by
+attention mechanisms or loss computation. Will be associated to <code>self.pad_token</code> and
+<code>self.pad_token_id</code>.
+cls_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token representing the class of the input (used by BERT for instance). Will be associated to
+<code>self.cls_token</code> and <code>self.cls_token_id</code>.
+mask_token (:obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A special token representing a masked token (used by masked-language modeling pretraining objectives, like
+BERT). Will be associated to <code>self.mask_token</code> and <code>self.mask_token_id</code>.
+additional_special_tokens (tuple or list of :obj:<code>str</code> or :obj:<code>tokenizers.AddedToken</code>, <code>optional</code>):
+A tuple or a list of additional special tokens. Add them here to ensure they won't be split by the
+tokenization process. Will be associated to <code>self.additional_special_tokens</code> and
+<code>self.additional_special_tokens_ids</code>.
+A character hashing tokenizer/embedder from <a href="https://arxiv.org/abs/2103.06874">CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>hash_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The embedding size of each character, by default 768</dd>
+<dt><strong><code>model_input_names</code></strong> :&ensp;<code>Optional[List[str]]</code>, optional</dt>
+<dd>Required input names for the downstream model, by default None</dd>
+<dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
+<dd>Special tokens of the downstream model, by default None</dd>
+<dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
+<dd>Maximum character length, by default 2048</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
+&gt;&gt;&gt; from transformers.tokenization_utils_base import *
+&gt;&gt;&gt; tokenier = CANINETokenizer()
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class CANINETokenizer(PreTrainedTokenizerBase):
+    
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        &#34;&#34;&#34;A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
 
-    hash_size: int = 768
-    model_input_names: Optional[List[str]] = None
-    special_tokens: Optional[Dict[str, np.ndarray]] = None
-    max_length: Optional[int] = 2048
+        Parameters
+        ----------
+        hash_size : int, optional
+            The embedding size of each character, by default 768
+        model_input_names : Optional[List[str]], optional
+            Required input names for the downstream model, by default None
+        special_tokens : Optional[Dict[str, np.ndarray]], optional
+            Special tokens of the downstream model, by default None
+        max_length : Optional[int], optional
+            Maximum character length, by default 2048
 
-    def __post_init__(self):
+        Examples
+        --------
+        &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
+        &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+        &gt;&gt;&gt; tokenier = CANINETokenizer()
+        &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+        &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
+        &#34;&#34;&#34;
+
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+
         if self.model_input_names is None:
             # Assume the model takes BERT-like parameters
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
@@ -531,7 +667,7 @@ class CANINETokenizer(PreTrainedTokenizerBase):
         return_length: bool = False,
         **kwargs,
     ) -&gt; BatchEncoding:
-        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks. Reference paper: https://t.co/l9E6rL8O5p?amp=1
+        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks.
 
         Parameters
         ----------
@@ -944,19 +1080,27 @@ class CANINETokenizer(PreTrainedTokenizerBase):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.hash_size"><code class="name">var <span class="ident">hash_size</span> : int</code></dt>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.max_length"><code class="name">var <span class="ident">max_length</span> : Union[int, NoneType]</code></dt>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : Union[List[str], NoneType]</code></dt>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.special_tokens"><code class="name">var <span class="ident">special_tokens</span> : Union[Dict[str, numpy.ndarray], NoneType]</code></dt>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.canine.CANINETokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1508,14 +1652,16 @@ regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.build_inputs_with_special_tokens" href="#text_embeddings.hash.canine.CANINETokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.create_token_type_ids_from_sequences" href="#text_embeddings.hash.canine.CANINETokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.get_special_tokens_mask" href="#text_embeddings.hash.canine.CANINETokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.hash_size" href="#text_embeddings.hash.canine.CANINETokenizer.hash_size">hash_size</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.max_length" href="#text_embeddings.hash.canine.CANINETokenizer.max_length">max_length</a></code></li>
+<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes" href="#text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.model_input_names" href="#text_embeddings.hash.canine.CANINETokenizer.model_input_names">model_input_names</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.num_special_tokens_to_add" href="#text_embeddings.hash.canine.CANINETokenizer.num_special_tokens_to_add">num_special_tokens_to_add</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.pad" href="#text_embeddings.hash.canine.CANINETokenizer.pad">pad</a></code></li>
+<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.padding_side" href="#text_embeddings.hash.canine.CANINETokenizer.padding_side">padding_side</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.prepare_for_model" href="#text_embeddings.hash.canine.CANINETokenizer.prepare_for_model">prepare_for_model</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.special_tokens" href="#text_embeddings.hash.canine.CANINETokenizer.special_tokens">special_tokens</a></code></li>
+<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration" href="#text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map" href="#text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
 <li><code><a title="text_embeddings.hash.canine.CANINETokenizer.text2hashes" href="#text_embeddings.hash.canine.CANINETokenizer.text2hashes">text2hashes</a></code></li>
+<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.vocab_files_names" href="#text_embeddings.hash.canine.CANINETokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>
 </ul>
