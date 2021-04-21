@@ -16,15 +16,44 @@ def _is_torch(x):
     return isinstance(x, torch.Tensor)
 
 
-@dataclass
 class CANINETokenizer(PreTrainedTokenizerBase):
 
-    hash_size: int = 768
-    model_input_names: Optional[List[str]] = None
-    special_tokens: Optional[Dict[str, np.ndarray]] = None
-    max_length: Optional[int] = 2048
+    """
+    A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
 
-    def __post_init__(self):
+    Parameters
+    ----------
+    hash_size : int, optional
+        The embedding size of each character, by default 768
+    model_input_names : Optional[List[str]], optional
+        Required input names for the downstream model, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens of the downstream model, by default None
+    max_length : Optional[int], optional
+        Maximum character length, by default 2048
+
+    Examples
+    --------
+    >>> from text_embeddings.hash import CANINETokenizer
+    >>> from transformers.tokenization_utils_base import *
+    >>> tokenier = CANINETokenizer()
+    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    >>> assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
+    """
+
+    
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+
         if self.model_input_names is None:
             # Assume the model takes BERT-like parameters
             self.model_input_names = ["input_ids", "token_type_ids", "attention_mask"]
@@ -47,7 +76,7 @@ class CANINETokenizer(PreTrainedTokenizerBase):
         return_length: bool = False,
         **kwargs,
     ) -> BatchEncoding:
-        """Tokenize the text into a sequence of image blocks. Reference paper: https://t.co/l9E6rL8O5p?amp=1
+        """Tokenize the text into a sequence of image blocks.
 
         Parameters
         ----------

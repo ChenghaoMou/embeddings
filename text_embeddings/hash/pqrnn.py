@@ -4,7 +4,6 @@
 # @Author  : Chenghao Mou (mouchenghao@gmail.com)
 
 import numpy as np
-from dataclasses import dataclass
 from typing import Optional, List, Union
 from transformers.tokenization_utils_base import *
 from itertools import zip_longest
@@ -16,15 +15,43 @@ def _is_torch(x):
     return isinstance(x, torch.Tensor)
 
 
-@dataclass
 class PQRNNTokenizer(PreTrainedTokenizerBase):
+    """Boundary-based hashing embeddings based on [PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html)
 
-    hash_size: int = 768
-    model_input_names: Optional[List[str]] = None
-    special_tokens: Optional[Dict[str, np.ndarray]] = None
-    max_length: Optional[int] = 2048
+    Parameters
+    ----------
+    hash_size : int, optional
+        The size of the hashing embedding, by default 768
+    model_input_names : Optional[List[str]], optional
+        Required inputs of the downstream model, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default None
+    max_length : Optional[int], optional
+        Maximum token length, by default 2048
+    
+    Examples
+    --------
+    >>> from text_embeddings.hash import PQRNNTokenizer
+    >>> from transformers.tokenization_utils_base import *
+    >>> tokenier = PQRNNTokenizer()
+    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    >>> assert results['input_ids'].shape == (2, 4, 768), results['input_ids'].shape
+    """
 
-    def __post_init__(self):
+
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+        
         if self.model_input_names is None:
             # Assume the model takes BERT-like parameters
             self.model_input_names = ["input_ids", "token_type_ids", "attention_mask"]

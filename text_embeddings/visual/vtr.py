@@ -8,7 +8,6 @@ import numpy as np
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-from dataclasses import dataclass
 from typing import Optional, List, Union
 from transformers.tokenization_utils_base import *
 from itertools import zip_longest
@@ -49,17 +48,49 @@ def text2image(text: str, font: str, font_size: int = 14) -> Image:
     return img
 
 
-@dataclass
 class VTRTokenizer(PreTrainedTokenizerBase):
+    """Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
-    height: int = 14
-    width: int = 10
-    font: str = "~/Library/Fonts/NotoSansDisplay-Regular.ttf"
-    model_input_names: List[str] = None
-    special_tokens: Optional[Dict[str, np.ndarray]] = None
-    max_length: Optional[int] = 25
+    Parameters
+    ----------
+    height : int, optional
+        The height of the font, might be smaller than the actual image height, by default 14
+    width : int, optional
+        The width of the image window, by default 10
+    font : str, optional
+        Path to the font file, by default "~/Library/Fonts/NotoSansDisplay-Regular.ttf"
+    model_input_names : List[str], optional
+        Required inputs for the downstream model, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default None
+    max_length : Optional[int], optional
+        Maximum sequence length, by default 25
+    
+    Examples
+    --------
+    >>> from text_embeddings.visual import VTRTokenizer
+    >>> from transformers.tokenization_utils_base import *
+    >>> tokenier = VTRTokenizer()
+    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    >>> assert results['input_ids'].shape == (2, 25, 15, 10), results['input_ids'].shape
+    """
+    def __init__(
+        self,
+        height: int = 14,
+        width: int = 10,
+        font: str = "~/Library/Fonts/NotoSansDisplay-Regular.ttf",
+        model_input_names: List[str] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 25,
+    ):
 
-    def __post_init__(self):
+        self.height = height
+        self.width = width
+        self.font = font
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+        
         if self.model_input_names is None:
             # Assume the model takes BERT-like parameters
             self.model_input_names = ["input_ids", "token_type_ids", "attention_mask"]
@@ -72,7 +103,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         padding: Union[bool, str, PaddingStrategy] = False,
         truncation: Union[bool, str, TruncationStrategy] = False,
         max_length: Optional[int] = None,
-        stride: int = 0,
+        stride: int = 5,
         pad_to_multiple_of: Optional[int] = None,
         return_tensors: Optional[Union[str, TensorType]] = None,
         return_token_type_ids: Optional[bool] = None,
@@ -99,7 +130,7 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         max_length : Optional[int], optional
             Maximum sequence length, overriding the class variable, by default None
         stride : int, optional
-            Stride for generating blocks, by default 0
+            Stride for generating blocks, by default 5
         pad_to_multiple_of : Optional[int], optional
             Padding parameters, by default None
         return_tensors : Optional[Union[str, TensorType]], optional
@@ -162,7 +193,6 @@ class VTRTokenizer(PreTrainedTokenizerBase):
                 if key not in batch_outputs:
                     batch_outputs[key] = []
                 batch_outputs[key].append(value)
-                print(key, np.asarray(value).shape)
         
         batch_outputs = self.pad(
             batch_outputs,
