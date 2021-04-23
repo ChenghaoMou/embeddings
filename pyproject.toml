@@ -4,6 +4,9 @@ version = "0.0.3"
 description = "Non-traditional/no-vocabulary text embeddings in one place."
 authors = ["Chenghao Mou <mouchenghao@gmail.com>"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ChenghaoMou/embeddings"
+homepage = "https://github.com/ChenghaoMou/embeddings"
 
 [tool.poetry.dependencies]
 python = "^3.8"
