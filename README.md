@@ -29,22 +29,22 @@ from text_embeddings.visual import VTRTokenizer
 from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
 
 data = [
-  "Hello world!",
-  "¡Hola Mundo!",
-  "你好，世界！",
+"Hello world!",
+"¡Hola Mundo!",
+"你好，世界！",
 ]
 
 tokenizer = VTRTokenizer(
-    height=14,
-    width=10,
-    font="~/Library/Fonts/NotoSansDisplay-Regular.ttf", # Any font that covers your dataset
+    font_size=14,
+    window_size=10,
+    font="~/Library/Fonts/NotoSansDisplay-Regular.ttf",
     max_length=36
 )
+
 results = tokenizer(
     text=data,
     text_pair=data,
     add_special_tokens=True,
-    stride=5,
     padding=PaddingStrategy.LONGEST, 
     return_tensors='pt',
     truncation=TruncationStrategy.LONGEST_FIRST, 
@@ -55,9 +55,39 @@ results = tokenizer(
     return_overflowing_tokens=False,
 )
 
-# (batch_size, sequence_length, height, width) actual height might be higher than the font height value because of rendering
-assert results["input_ids"].shape == (3, results["input_ids"].shape[1], 19, 10) 
+assert results["input_ids"].shape == (3, results["input_ids"].shape[1], 14, 10) 
 assert results["attention_mask"].shape == (3, results["input_ids"].shape[1])
 assert results["token_type_ids"].shape == (3, results["input_ids"].shape[1])
 assert results["length"].shape == (3, )
+```
+
+## Write Your Own Embedding Tokenizer
+
+```python
+import numpy as np
+from typing import Optional, List, Dict
+from text_embeddings.base import EmbeddingTokenizer
+
+
+class MyOwnTokenizer(EmbeddingTokenizer):
+
+    def __init__(
+        self,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        super().__init__(model_input_names, special_tokens, max_length)
+
+    def text2embeddings(self, text: str) -> np.ndarray:
+        
+        sequence_length = 10
+        dimensions = (10, 10, 10) # each token is mapped to a 3-d array
+        return np.zeros((sequence_length, *dimensions))
+
+    def create_padding_token_embedding(self, input_embeddings=None) -> np.ndarray:
+
+        # let's create a consistent 3-d array
+        return np.zeros((10, 10, 10))
+
 ```
