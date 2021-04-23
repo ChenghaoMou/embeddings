@@ -34,13 +34,13 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
     This implementation borrows most implementation from huggingface's transformers library.
 
     Parameters
-        ----------
-        model_input_names : Optional[List[str]], optional
-            Required model input names, by default None
-        special_tokens : Optional[Dict[str, np.ndarray]], optional
-            Required model special tokens, by default None
-        max_length : Optional[int], optional
-            Maximum sequence length supported by the model, by default 2048
+    ----------
+    model_input_names : Optional[List[str]], optional
+        Required model input names, by default None
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Required model special tokens, by default None
+    max_length : Optional[int], optional
+        Maximum sequence length supported by the model, by default 2048
     """
 
     def __init__(
