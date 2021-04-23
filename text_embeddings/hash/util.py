@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Date    : 2021-04-22 21:03:09
+# @Author  : Chenghao Mou (mouchenghao@gmail.com)
+
+"""Python translation of the original code in tensorflow."""
+
 from typing import List
 
 import mmh3

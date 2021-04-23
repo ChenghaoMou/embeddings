@@ -18,7 +18,6 @@ def test_text2image(text: str):
 
     with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
         img = text2image(text, font="~/Library/Fonts/NotoSansDisplay-Regular.ttf")
-        # img.show()
         img.save(tmp.name)
 
 @pytest.mark.parametrize(
@@ -41,8 +40,8 @@ def test_vtr_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, p
     ]
 
     embedder = VTRTokenizer(
-        height=14,
-        width=10,
+        font_size=14,
+        window_size=10,
         font="~/Library/Fonts/NotoSansDisplay-Regular.ttf",
         max_length=36
     )
@@ -69,9 +68,9 @@ def test_vtr_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, p
         assert results["special_tokens_mask"].shape == (3, sequence_length)
 
     if add_special_tokens:
-        assert results["input_ids"].shape == (3, sequence_length, 19, 10) # hight is slightly different because of the font
+        assert results["input_ids"].shape == (3, sequence_length, 14, 10) # hight is slightly different because of the font
     else:
-        assert results["input_ids"].shape == (3, sequence_length, 15, 10) # hight is slightly different because of the font
+        assert results["input_ids"].shape == (3, sequence_length, 14, 10) # hight is slightly different because of the font
     if return_length:
         assert results["length"].shape == (3, )
     assert results["token_type_ids"].shape == (3, sequence_length)
