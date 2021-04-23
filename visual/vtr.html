@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>text_embeddings.visual.vtr API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Robust Open­ Vocabulary Translation from Visual Text Representations" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,6 +22,7 @@
 <h1 class="title">Module <code>text_embeddings.visual.vtr</code></h1>
 </header>
 <section id="section-intro">
+<p>Robust Open­ Vocabulary Translation from Visual Text Representations</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -32,19 +33,17 @@
 # @Author       : Chenghao Mou (mouchenghao@gmail.com)
 # @Description  : From Robust Open-­Vocabulary Translation from Visual Text Representations
 
+&#34;&#34;&#34;Robust Open­ Vocabulary Translation from Visual Text Representations&#34;&#34;&#34;
+
+from typing import List, Optional, Dict
+
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-from typing import Optional, List, Union
-from transformers.tokenization_utils_base import *
-from itertools import zip_longest
 from numpy.lib.stride_tricks import sliding_window_view
 
-def _is_torch(x): # pragma: no
-    import torch
-
-    return isinstance(x, torch.Tensor)
+from text_embeddings.base import EmbeddingTokenizer
 
 def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
     &#34;&#34;&#34;Convert text into an image and return the image. Reference: https://gist.github.com/destan/5540702
@@ -67,182 +66,72 @@ def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
     image_font = ImageFont.truetype(font, font_size)
     text = text.replace(&#34;\n&#34;, &#34; &#34;)
 
-    line_width, line_height = image_font.getsize(text)
+    line_width, _ = image_font.getsize(text)
 
-    img = Image.new(&#34;L&#34;, (line_width, line_height))
+    img = Image.new(&#34;L&#34;, (line_width, font_size))
     draw = ImageDraw.Draw(img)
     draw.text(xy=(0, 0), text=text, fill=&#34;#FFFFFF&#34;, font=image_font)
 
     return img
 
 
-class VTRTokenizer(PreTrainedTokenizerBase):
-    &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
+class VTRTokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;
+    Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
     Parameters
     ----------
-    height : int, optional
-        The height of the font, might be smaller than the actual image height, by default 14
-    width : int, optional
+    window_size : int, optional
         The width of the image window, by default 10
+    stride: int optional
+        The stride used to generate image windows, by default 10
     font : str, optional
         Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+    font_size : int, optional
+        The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
         Required inputs for the downstream model, by default None
     special_tokens : Optional[Dict[str, np.ndarray]], optional
         Special tokens for the downstream model, by default None
     max_length : Optional[int], optional
         Maximum sequence length, by default 25
-    
+
     Examples
     --------
     &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 15, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
+
     def __init__(
         self,
-        height: int = 14,
-        width: int = 10,
+        window_size: int = 10,
+        stride: int = 10,
         font: str = &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;,
+        font_size: int = 14,
         model_input_names: List[str] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
         max_length: Optional[int] = 25,
     ):
-
-        self.height = height
-        self.width = width
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.font_size = font_size
+        self.window_size = window_size
+        self.stride = stride
         self.font = font
-        self.model_input_names = model_input_names
-        self.special_tokens = special_tokens
-        self.max_length = max_length
-        
+
         if self.model_input_names is None:
-            # Assume the model takes BERT-like parameters
+            # TODO: Assume the model takes BERT-like parameters
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
-    def __call__(
-        self,
-        text: Union[TextInput, List[TextInput]],
-        text_pair: Optional[Union[TextInput, List[TextInput]]] = None,
-        add_special_tokens: bool = True,
-        padding: Union[bool, str, PaddingStrategy] = False,
-        truncation: Union[bool, str, TruncationStrategy] = False,
-        max_length: Optional[int] = None,
-        stride: int = 5,
-        pad_to_multiple_of: Optional[int] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        return_token_type_ids: Optional[bool] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_overflowing_tokens: bool = False,
-        return_special_tokens_mask: bool = False,
-        return_length: bool = False,
-        **kwargs,
-    ) -&gt; BatchEncoding:
-        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks. Reference paper: https://t.co/l9E6rL8O5p?amp=1
-
-        Parameters
-        ----------
-        text : Union[TextInput, List[TextInput]]
-            A single text or a list of text
-        text_pair : Optional[Union[TextInput, List[TextInput]]], optional
-            A single text or a list of text, by default None
-        add_special_tokens : bool, optional
-            Whether to add special tokens to the data, by default True
-        padding : Union[bool, str, PaddingStrategy], optional
-            The padding strategy, by default False
-        truncation : Union[bool, str, TruncationStrategy], optional
-            The truncation strategy, by default False
-        max_length : Optional[int], optional
-            Maximum sequence length, overriding the class variable, by default None
-        stride : int, optional
-            Stride for generating blocks, by default 5
-        pad_to_multiple_of : Optional[int], optional
-            Padding parameters, by default None
-        return_tensors : Optional[Union[str, TensorType]], optional
-            Return tensors in `pt`, &#39;tf&#39; or &#39;np&#39;, by default None
-        return_token_type_ids : Optional[bool], optional
-            Return token type ids, by default None
-        return_attention_mask : Optional[bool], optional
-            Return attention mask, by default None
-        return_overflowing_tokens : bool, optional
-            Return overflowing tokens, by default False
-        return_special_tokens_mask : bool, optional
-            Return special token mask, by default False
-        return_length : bool, optional
-            Return length, by default False
-
-        Returns
-        -------
-        BatchEncoding
-            A BatchEncoding object
-        &#34;&#34;&#34;
-        if self.special_tokens is None:
-            self.special_tokens = {
-                &#34;CLS&#34;: self.text2blocks(&#34;[CLS]&#34;, stride=stride),
-                &#34;SEP&#34;: self.text2blocks(&#34;[SEP]&#34;, stride=stride),
-            }
-
-        if add_special_tokens and text_pair:
-            actual_max_length = self.max_length - len(self.special_tokens[&#34;SEP&#34;]) * 2 - len(self.special_tokens[&#34;CLS&#34;])
-        else:
-            actual_max_length = self.max_length
-        
-        batch_outputs = {}
-        text = text if isinstance(text, list) else [text]
-        text_pair = text_pair if isinstance(text_pair, list) else [text_pair]
-
-        for first_text, second_text in zip_longest(text, text_pair):
-            
-            first_embeddings = self.text2blocks(first_text, stride=stride)
-            second_embeddings = self.text2blocks(second_text, stride=stride)
-
-            outputs = self.prepare_for_model(
-                first_embeddings,
-                second_embeddings,
-                add_special_tokens=add_special_tokens,
-                padding=PaddingStrategy.DO_NOT_PAD,  # we pad in batch afterward
-                truncation=truncation,
-                max_length=max_length or actual_max_length,
-                stride=stride,
-                pad_to_multiple_of=None,  # we pad in batch afterward
-                return_attention_mask=False,  # we pad in batch afterward
-                return_token_type_ids=return_token_type_ids,
-                return_overflowing_tokens=return_overflowing_tokens,
-                return_special_tokens_mask=return_special_tokens_mask,
-                return_length=return_length,
-                return_tensors=None,  # We convert the whole batch to tensors at the end
-                prepend_batch_axis=False,
-            )
-
-            for key, value in outputs.items():
-                if key not in batch_outputs:
-                    batch_outputs[key] = []
-                batch_outputs[key].append(value)
-        
-        batch_outputs = self.pad(
-            batch_outputs,
-            padding=padding,
-            max_length=max_length or actual_max_length,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_attention_mask=return_attention_mask,
-        )
-        
-        batch_outputs = BatchEncoding(batch_outputs, tensor_type=return_tensors)
-
-        return batch_outputs
-
-    def text2blocks(self, text: str, stride: int) -&gt; np.ndarray:
-        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, height, width) shape.
+    def text2embeddings(self, text: str) -&gt; np.ndarray:
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.
 
         Parameters
         ----------
         text : str
             Input text
-        stride : int
-            Stride for image block generation
 
         Returns
         -------
@@ -251,305 +140,29 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         &#34;&#34;&#34;
         if not text:
             return None
-        
-        image = text2image(text, font=self.font, font_size=self.height)
+
+        image = text2image(text, font=self.font, font_size=self.font_size)
         image_array = np.asarray(image)
 
         return np.squeeze(
-            sliding_window_view(image_array, (image_array.shape[0], self.width)),
+            sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
             axis=0,
-        )[::stride]
+        )[:: self.stride]
 
-    def prepare_for_model(
-        self,
-        ids: List[int],
-        pair_ids: Optional[List[int]] = None,
-        add_special_tokens: bool = True,
-        padding: Union[bool, str, PaddingStrategy] = False,
-        truncation: Union[bool, str, TruncationStrategy] = False,
-        max_length: Optional[int] = None,
-        stride: int = 0,
-        pad_to_multiple_of: Optional[int] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        return_token_type_ids: Optional[bool] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_overflowing_tokens: bool = False,
-        return_special_tokens_mask: bool = False,
-        return_length: bool = False,
-        prepend_batch_axis: bool = False,
-        **kwargs
-    ):
+    def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+        &#34;&#34;&#34;Create a padding token embedding for an empty window.
 
-        pair = bool(pair_ids is not None)
-        len_ids = len(ids)
-        len_pair_ids = len(pair_ids) if pair else 0
-        if return_token_type_ids and not add_special_tokens:
-            raise ValueError(
-                &#34;Asking to return token_type_ids while setting add_special_tokens to False &#34;
-                &#34;results in an undefined behavior. Please set add_special_tokens to True or &#34;
-                &#34;set return_token_type_ids to None.&#34;
-            )
+        Parameters
+        ----------
+        input_embeddings : [type], optional
+            Embeddings already encoded, by default None
 
-        # Load from model defaults
-        if return_token_type_ids is None:
-            return_token_type_ids = &#34;token_type_ids&#34; in self.model_input_names
-        if return_attention_mask is None:
-            return_attention_mask = &#34;attention_mask&#34; in self.model_input_names
-
-        encoded_inputs = {}
-
-        # Compute the total size of the returned encodings
-        total_len = len_ids + len_pair_ids + (self.num_special_tokens_to_add(pair=pair) if add_special_tokens else 0)
-
-        # Truncation: Handle max sequence length
-        overflowing_tokens = []
-        if truncation != TruncationStrategy.DO_NOT_TRUNCATE and max_length and total_len &gt; max_length:
-            ids, pair_ids, overflowing_tokens = self.truncate_sequences(
-                ids,
-                pair_ids=pair_ids,
-                num_tokens_to_remove=total_len - max_length,
-                truncation_strategy=truncation,
-                stride=stride,
-            )
-
-        if return_overflowing_tokens:
-            encoded_inputs[&#34;overflowing_tokens&#34;] = overflowing_tokens
-            encoded_inputs[&#34;num_truncated_tokens&#34;] = total_len - max_length
-
-        # Add special tokens
-        if add_special_tokens:
-            sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
-            token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
-        else:
-            sequence = np.concatenate([ids, pair_ids], axis=0) if pair is True else ids
-            token_type_ids = [0] * len(ids) + ([0] * len(pair_ids) if pair else [])
-    
-        # Build output dictionary
-        encoded_inputs[&#34;input_ids&#34;] = sequence
-
-        if return_token_type_ids:
-            encoded_inputs[&#34;token_type_ids&#34;] = token_type_ids
-        if return_special_tokens_mask:
-            if add_special_tokens:
-                encoded_inputs[&#34;special_tokens_mask&#34;] = self.get_special_tokens_mask(ids, pair_ids)
-            else:
-                encoded_inputs[&#34;special_tokens_mask&#34;] = [0] * len(sequence)
-
-        # Padding
-        if padding != PaddingStrategy.DO_NOT_PAD or return_attention_mask:
-            encoded_inputs = self.pad(
-                encoded_inputs,
-                max_length=max_length,
-                padding=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-
-        if return_length:
-            encoded_inputs[&#34;length&#34;] = len(encoded_inputs[&#34;input_ids&#34;])
-
-        batch_outputs = BatchEncoding(
-            encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis
-        )
-        
-        return batch_outputs
-    
-    def num_special_tokens_to_add(self, pair: bool = False) -&gt; int:
-        return 0 if not pair else 3
-    
-    def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -&gt; List[int]:
-        if token_ids_1 is None:
-            return token_ids_0
-        height = max(
-            self.special_tokens[&#34;CLS&#34;].shape[1], 
-            token_ids_0.shape[1],
-            self.special_tokens[&#34;SEP&#34;].shape[1], 
-            token_ids_1.shape[1],
-            self.special_tokens[&#34;SEP&#34;].shape[1]
-        )
-        
-        return np.concatenate(
-            [
-                np.pad(self.special_tokens[&#34;CLS&#34;], ((0, 0), (0, height-self.special_tokens[&#34;CLS&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(token_ids_0, ((0, 0), (0, height - token_ids_0.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(token_ids_1, ((0, 0), (0, height - token_ids_1.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0)
-            ],
-            axis=0
-        )
-    
-    def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -&gt; List[int]:
-        if token_ids_1 is None:
-            return [0 for _ in token_ids_0]
-        return [1 for _ in self.special_tokens[&#34;CLS&#34;]] + [0 for _ in token_ids_0] + [1 for _ in self.special_tokens[&#34;SEP&#34;]] + [0 for _ in token_ids_1] + [1 for _ in self.special_tokens[&#34;SEP&#34;]]
-    
-    def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, add_special_tokens: bool = True
-    ) -&gt; List[int]:
-
-        if token_ids_1 is None:
-            return len(token_ids_0) * [0]
-        return [0]*len(self.special_tokens[&#34;CLS&#34;]) + [0] * len(token_ids_0) + [0]*len(self.special_tokens[&#34;SEP&#34;]) + [1] * len(token_ids_1) + [0]*len(self.special_tokens[&#34;SEP&#34;])
-
-    def pad(
-        self,
-        encoded_inputs: Union[
-            BatchEncoding,
-            List[BatchEncoding],
-            Dict[str, EncodedInput],
-            Dict[str, List[EncodedInput]],
-            List[Dict[str, EncodedInput]],
-        ],
-        padding: Union[bool, str, PaddingStrategy] = True,
-        max_length: Optional[int] = None,
-        pad_to_multiple_of: Optional[int] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        verbose: bool = True,
-    ) -&gt; BatchEncoding:
-
-        # If we have a list of dicts, let&#39;s convert it in a dict of lists
-        # We do this to allow using this method as a collate_fn function in PyTorch Dataloader
-        if isinstance(encoded_inputs, (list, tuple)) and isinstance(encoded_inputs[0], (dict, BatchEncoding)):
-            encoded_inputs = {key: [example[key] for example in encoded_inputs] for key in encoded_inputs[0].keys()}
-
-        # The model&#39;s main input name, usually `input_ids`, has be passed for padding
-        if self.model_input_names[0] not in encoded_inputs:
-            raise ValueError(
-                &#34;You should supply an encoding or a list of encodings to this method&#34;
-                f&#34;that includes {self.model_input_names[0]}, but you provided {list(encoded_inputs.keys())}&#34;
-            )
-
-        required_input = encoded_inputs[self.model_input_names[0]]
-
-        if required_input is None:
-            if return_attention_mask:
-                encoded_inputs[&#34;attention_mask&#34;] = []
-            return encoded_inputs
-
-        # If we have PyTorch/TF/NumPy tensors/arrays as inputs, we cast them as python objects
-        # and rebuild them afterwards if no return_tensors is specified
-        # Note that we lose the specific device the tensor may be on for PyTorch
-
-        first_element = required_input[0]
-        if isinstance(first_element, (list, tuple)):
-            # first_element might be an empty list/tuple in some edge cases so we grab the first non empty element.
-            index = 0
-            while len(required_input[index]) == 0:
-                index += 1
-            if index &lt; len(required_input):
-                first_element = required_input[index][0]
-        # At this state, if `first_element` is still a list/tuple, it&#39;s an empty one so there is nothing to do.
-        if not isinstance(first_element, (int, list, tuple)):
-            if is_torch_available() and _is_torch(first_element):
-                return_tensors = &#34;pt&#34; if return_tensors is None else return_tensors
-            elif isinstance(first_element, np.ndarray):
-                return_tensors = &#34;np&#34; if return_tensors is None else return_tensors
-            else:
-                raise ValueError(
-                    f&#34;type of {first_element} unknown: {type(first_element)}. &#34;
-                    f&#34;Should be one of a python, numpy or pytorch object.&#34;
-                )
-
-            for key, value in encoded_inputs.items():
-                encoded_inputs[key] = to_py_obj(value)
-        
-        required_input = encoded_inputs[self.model_input_names[0]]
-        if required_input and not isinstance(required_input[0], (list, tuple)):
-            encoded_inputs = self._pad(
-                encoded_inputs,
-                max_length=max_length,
-                padding_strategy=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-            return BatchEncoding(encoded_inputs, tensor_type=return_tensors)
-
-        batch_size = len(required_input)
-        assert all(
-            len(v) == batch_size for v in encoded_inputs.values()
-        ), &#34;Some items in the output dictionary have a different batch size than others.&#34;
-
-        if padding == PaddingStrategy.LONGEST:
-            max_length = max(len(inputs) for inputs in required_input)
-            padding = PaddingStrategy.MAX_LENGTH
-        
-        batch_outputs = {}
-        for i in range(batch_size):
-            inputs = dict((k, v[i]) for k, v in encoded_inputs.items())
-            outputs = self._pad(
-                inputs,
-                max_length=max_length,
-                padding_strategy=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-
-            for key, value in outputs.items():
-                if key not in batch_outputs:
-                    batch_outputs[key] = []
-                batch_outputs[key].append(value)
-
-        return BatchEncoding(batch_outputs, tensor_type=return_tensors)
-
-    def _pad(
-        self,
-        encoded_inputs: Union[Dict[str, EncodedInput], BatchEncoding],
-        max_length: Optional[int] = None,
-        padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-        pad_to_multiple_of: Optional[int] = None,
-        return_attention_mask: Optional[bool] = None,
-    ) -&gt; dict:
-
-        # Load from model defaults
-        
-        if return_attention_mask is None:
-            return_attention_mask = &#34;attention_mask&#34; in self.model_input_names
-
-        required_input = encoded_inputs[self.model_input_names[0]]
-        if padding_strategy == PaddingStrategy.LONGEST:
-            max_length = len(required_input)
-
-        if max_length is not None and pad_to_multiple_of is not None and (max_length % pad_to_multiple_of != 0):
-            max_length = ((max_length // pad_to_multiple_of) + 1) * pad_to_multiple_of
-
-        needs_to_be_padded = padding_strategy != PaddingStrategy.DO_NOT_PAD and len(required_input) != max_length
-
-        if needs_to_be_padded:
-            difference = max_length - len(required_input)
-            if &#34;token_type_ids&#34; in encoded_inputs and isinstance(encoded_inputs[&#34;token_type_ids&#34;], int):
-                encoded_inputs[&#34;token_type_ids&#34;] = [encoded_inputs[&#34;token_type_ids&#34;]]
-            if self.padding_side == &#34;right&#34;:
-                if return_attention_mask:
-                    encoded_inputs[&#34;attention_mask&#34;] = [1] * len(required_input) + [0] * difference
-                if &#34;token_type_ids&#34; in encoded_inputs:
-                    encoded_inputs[&#34;token_type_ids&#34;] = (
-                        encoded_inputs[&#34;token_type_ids&#34;] + [1] * difference
-                    )
-                if &#34;special_tokens_mask&#34; in encoded_inputs:
-                    encoded_inputs[&#34;special_tokens_mask&#34;] = encoded_inputs[&#34;special_tokens_mask&#34;] + [1] * difference
-                encoded_inputs[self.model_input_names[0]] = required_input + [np.zeros((len(required_input[0]), self.width))] * difference
-            elif self.padding_side == &#34;left&#34;:
-                if return_attention_mask:
-                    encoded_inputs[&#34;attention_mask&#34;] = [0] * difference + [1] * len(required_input)
-                if &#34;token_type_ids&#34; in encoded_inputs:
-                    encoded_inputs[&#34;token_type_ids&#34;] = [0] * difference + encoded_inputs[
-                        &#34;token_type_ids&#34;
-                    ]
-                if &#34;special_tokens_mask&#34; in encoded_inputs:
-                    encoded_inputs[&#34;special_tokens_mask&#34;] = [1] * difference + encoded_inputs[&#34;special_tokens_mask&#34;]
-                encoded_inputs[self.model_input_names[0]] = [np.zeros((len(required_input[0]), self.width))] * difference + required_input
-            else:
-                raise ValueError(&#34;Invalid padding strategy:&#34; + str(self.padding_side))
-        elif return_attention_mask and &#34;attention_mask&#34; not in encoded_inputs:
-            encoded_inputs[&#34;attention_mask&#34;] = [1] * len(required_input)
-
-        return encoded_inputs</code></pre>
+        Returns
+        -------
+        np.ndarray
+            An empty array in (font_size, window_size) shape
+        &#34;&#34;&#34;
+        return np.zeros((len(input_embeddings[0]), self.window_size))</code></pre>
 </details>
 </section>
 <section>
@@ -603,9 +216,9 @@ class VTRTokenizer(PreTrainedTokenizerBase):
     image_font = ImageFont.truetype(font, font_size)
     text = text.replace(&#34;\n&#34;, &#34; &#34;)
 
-    line_width, line_height = image_font.getsize(text)
+    line_width, _ = image_font.getsize(text)
 
-    img = Image.new(&#34;L&#34;, (line_width, line_height))
+    img = Image.new(&#34;L&#34;, (line_width, font_size))
     draw = ImageDraw.Draw(img)
     draw.text(xy=(0, 0), text=text, fill=&#34;#FFFFFF&#34;, font=image_font)
 
@@ -619,18 +232,20 @@ class VTRTokenizer(PreTrainedTokenizerBase):
 <dl>
 <dt id="text_embeddings.visual.vtr.VTRTokenizer"><code class="flex name class">
 <span>class <span class="ident">VTRTokenizer</span></span>
-<span>(</span><span>height: int = 14, width: int = 10, font: str = '~/Library/Fonts/NotoSansDisplay-Regular.ttf', model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
+<span>(</span><span>window_size: int = 10, stride: int = 10, font: str = '~/Library/Fonts/NotoSansDisplay-Regular.ttf', font_size: int = 14, model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Render the text into a series of image blocks. Reference <a href="https://t.co/l9E6rL8O5p?amp=1">VTR</a></p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>height</code></strong> :&ensp;<code>int</code>, optional</dt>
-<dd>The height of the font, might be smaller than the actual image height, by default 14</dd>
-<dt><strong><code>width</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dt><strong><code>window_size</code></strong> :&ensp;<code>int</code>, optional</dt>
 <dd>The width of the image window, by default 10</dd>
+<dt><strong><code>stride</code></strong> :&ensp;<code>int optional</code></dt>
+<dd>The stride used to generate image windows, by default 10</dd>
 <dt><strong><code>font</code></strong> :&ensp;<code>str</code>, optional</dt>
 <dd>Path to the font file, by default "~/Library/Fonts/NotoSansDisplay-Regular.ttf"</dd>
+<dt><strong><code>font_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The size of the font in pixels, might be smaller than the actual image height, by default 14</dd>
 <dt><strong><code>model_input_names</code></strong> :&ensp;<code>List[str]</code>, optional</dt>
 <dd>Required inputs for the downstream model, by default None</dd>
 <dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
@@ -643,179 +258,69 @@ class VTRTokenizer(PreTrainedTokenizerBase):
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = VTRTokenizer()
 &gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-&gt;&gt;&gt; assert results['input_ids'].shape == (2, 25, 15, 10), results['input_ids'].shape
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 15, 14, 10), results['input_ids'].shape
 </code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class VTRTokenizer(PreTrainedTokenizerBase):
-    &#34;&#34;&#34;Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
+<pre><code class="python">class VTRTokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;
+    Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
 
     Parameters
     ----------
-    height : int, optional
-        The height of the font, might be smaller than the actual image height, by default 14
-    width : int, optional
+    window_size : int, optional
         The width of the image window, by default 10
+    stride: int optional
+        The stride used to generate image windows, by default 10
     font : str, optional
         Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+    font_size : int, optional
+        The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
         Required inputs for the downstream model, by default None
     special_tokens : Optional[Dict[str, np.ndarray]], optional
         Special tokens for the downstream model, by default None
     max_length : Optional[int], optional
         Maximum sequence length, by default 25
-    
+
     Examples
     --------
     &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 15, 10), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 15, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
+
     def __init__(
         self,
-        height: int = 14,
-        width: int = 10,
+        window_size: int = 10,
+        stride: int = 10,
         font: str = &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;,
+        font_size: int = 14,
         model_input_names: List[str] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
         max_length: Optional[int] = 25,
     ):
-
-        self.height = height
-        self.width = width
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.font_size = font_size
+        self.window_size = window_size
+        self.stride = stride
         self.font = font
-        self.model_input_names = model_input_names
-        self.special_tokens = special_tokens
-        self.max_length = max_length
-        
+
         if self.model_input_names is None:
-            # Assume the model takes BERT-like parameters
+            # TODO: Assume the model takes BERT-like parameters
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
-    def __call__(
-        self,
-        text: Union[TextInput, List[TextInput]],
-        text_pair: Optional[Union[TextInput, List[TextInput]]] = None,
-        add_special_tokens: bool = True,
-        padding: Union[bool, str, PaddingStrategy] = False,
-        truncation: Union[bool, str, TruncationStrategy] = False,
-        max_length: Optional[int] = None,
-        stride: int = 5,
-        pad_to_multiple_of: Optional[int] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        return_token_type_ids: Optional[bool] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_overflowing_tokens: bool = False,
-        return_special_tokens_mask: bool = False,
-        return_length: bool = False,
-        **kwargs,
-    ) -&gt; BatchEncoding:
-        &#34;&#34;&#34;Tokenize the text into a sequence of image blocks. Reference paper: https://t.co/l9E6rL8O5p?amp=1
-
-        Parameters
-        ----------
-        text : Union[TextInput, List[TextInput]]
-            A single text or a list of text
-        text_pair : Optional[Union[TextInput, List[TextInput]]], optional
-            A single text or a list of text, by default None
-        add_special_tokens : bool, optional
-            Whether to add special tokens to the data, by default True
-        padding : Union[bool, str, PaddingStrategy], optional
-            The padding strategy, by default False
-        truncation : Union[bool, str, TruncationStrategy], optional
-            The truncation strategy, by default False
-        max_length : Optional[int], optional
-            Maximum sequence length, overriding the class variable, by default None
-        stride : int, optional
-            Stride for generating blocks, by default 5
-        pad_to_multiple_of : Optional[int], optional
-            Padding parameters, by default None
-        return_tensors : Optional[Union[str, TensorType]], optional
-            Return tensors in `pt`, &#39;tf&#39; or &#39;np&#39;, by default None
-        return_token_type_ids : Optional[bool], optional
-            Return token type ids, by default None
-        return_attention_mask : Optional[bool], optional
-            Return attention mask, by default None
-        return_overflowing_tokens : bool, optional
-            Return overflowing tokens, by default False
-        return_special_tokens_mask : bool, optional
-            Return special token mask, by default False
-        return_length : bool, optional
-            Return length, by default False
-
-        Returns
-        -------
-        BatchEncoding
-            A BatchEncoding object
-        &#34;&#34;&#34;
-        if self.special_tokens is None:
-            self.special_tokens = {
-                &#34;CLS&#34;: self.text2blocks(&#34;[CLS]&#34;, stride=stride),
-                &#34;SEP&#34;: self.text2blocks(&#34;[SEP]&#34;, stride=stride),
-            }
-
-        if add_special_tokens and text_pair:
-            actual_max_length = self.max_length - len(self.special_tokens[&#34;SEP&#34;]) * 2 - len(self.special_tokens[&#34;CLS&#34;])
-        else:
-            actual_max_length = self.max_length
-        
-        batch_outputs = {}
-        text = text if isinstance(text, list) else [text]
-        text_pair = text_pair if isinstance(text_pair, list) else [text_pair]
-
-        for first_text, second_text in zip_longest(text, text_pair):
-            
-            first_embeddings = self.text2blocks(first_text, stride=stride)
-            second_embeddings = self.text2blocks(second_text, stride=stride)
-
-            outputs = self.prepare_for_model(
-                first_embeddings,
-                second_embeddings,
-                add_special_tokens=add_special_tokens,
-                padding=PaddingStrategy.DO_NOT_PAD,  # we pad in batch afterward
-                truncation=truncation,
-                max_length=max_length or actual_max_length,
-                stride=stride,
-                pad_to_multiple_of=None,  # we pad in batch afterward
-                return_attention_mask=False,  # we pad in batch afterward
-                return_token_type_ids=return_token_type_ids,
-                return_overflowing_tokens=return_overflowing_tokens,
-                return_special_tokens_mask=return_special_tokens_mask,
-                return_length=return_length,
-                return_tensors=None,  # We convert the whole batch to tensors at the end
-                prepend_batch_axis=False,
-            )
-
-            for key, value in outputs.items():
-                if key not in batch_outputs:
-                    batch_outputs[key] = []
-                batch_outputs[key].append(value)
-        
-        batch_outputs = self.pad(
-            batch_outputs,
-            padding=padding,
-            max_length=max_length or actual_max_length,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_attention_mask=return_attention_mask,
-        )
-        
-        batch_outputs = BatchEncoding(batch_outputs, tensor_type=return_tensors)
-
-        return batch_outputs
-
-    def text2blocks(self, text: str, stride: int) -&gt; np.ndarray:
-        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, height, width) shape.
+    def text2embeddings(self, text: str) -&gt; np.ndarray:
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.
 
         Parameters
         ----------
         text : str
             Input text
-        stride : int
-            Stride for image block generation
 
         Returns
         -------
@@ -824,308 +329,33 @@ class VTRTokenizer(PreTrainedTokenizerBase):
         &#34;&#34;&#34;
         if not text:
             return None
-        
-        image = text2image(text, font=self.font, font_size=self.height)
+
+        image = text2image(text, font=self.font, font_size=self.font_size)
         image_array = np.asarray(image)
 
         return np.squeeze(
-            sliding_window_view(image_array, (image_array.shape[0], self.width)),
+            sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
             axis=0,
-        )[::stride]
+        )[:: self.stride]
 
-    def prepare_for_model(
-        self,
-        ids: List[int],
-        pair_ids: Optional[List[int]] = None,
-        add_special_tokens: bool = True,
-        padding: Union[bool, str, PaddingStrategy] = False,
-        truncation: Union[bool, str, TruncationStrategy] = False,
-        max_length: Optional[int] = None,
-        stride: int = 0,
-        pad_to_multiple_of: Optional[int] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        return_token_type_ids: Optional[bool] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_overflowing_tokens: bool = False,
-        return_special_tokens_mask: bool = False,
-        return_length: bool = False,
-        prepend_batch_axis: bool = False,
-        **kwargs
-    ):
+    def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+        &#34;&#34;&#34;Create a padding token embedding for an empty window.
 
-        pair = bool(pair_ids is not None)
-        len_ids = len(ids)
-        len_pair_ids = len(pair_ids) if pair else 0
-        if return_token_type_ids and not add_special_tokens:
-            raise ValueError(
-                &#34;Asking to return token_type_ids while setting add_special_tokens to False &#34;
-                &#34;results in an undefined behavior. Please set add_special_tokens to True or &#34;
-                &#34;set return_token_type_ids to None.&#34;
-            )
+        Parameters
+        ----------
+        input_embeddings : [type], optional
+            Embeddings already encoded, by default None
 
-        # Load from model defaults
-        if return_token_type_ids is None:
-            return_token_type_ids = &#34;token_type_ids&#34; in self.model_input_names
-        if return_attention_mask is None:
-            return_attention_mask = &#34;attention_mask&#34; in self.model_input_names
-
-        encoded_inputs = {}
-
-        # Compute the total size of the returned encodings
-        total_len = len_ids + len_pair_ids + (self.num_special_tokens_to_add(pair=pair) if add_special_tokens else 0)
-
-        # Truncation: Handle max sequence length
-        overflowing_tokens = []
-        if truncation != TruncationStrategy.DO_NOT_TRUNCATE and max_length and total_len &gt; max_length:
-            ids, pair_ids, overflowing_tokens = self.truncate_sequences(
-                ids,
-                pair_ids=pair_ids,
-                num_tokens_to_remove=total_len - max_length,
-                truncation_strategy=truncation,
-                stride=stride,
-            )
-
-        if return_overflowing_tokens:
-            encoded_inputs[&#34;overflowing_tokens&#34;] = overflowing_tokens
-            encoded_inputs[&#34;num_truncated_tokens&#34;] = total_len - max_length
-
-        # Add special tokens
-        if add_special_tokens:
-            sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
-            token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
-        else:
-            sequence = np.concatenate([ids, pair_ids], axis=0) if pair is True else ids
-            token_type_ids = [0] * len(ids) + ([0] * len(pair_ids) if pair else [])
-    
-        # Build output dictionary
-        encoded_inputs[&#34;input_ids&#34;] = sequence
-
-        if return_token_type_ids:
-            encoded_inputs[&#34;token_type_ids&#34;] = token_type_ids
-        if return_special_tokens_mask:
-            if add_special_tokens:
-                encoded_inputs[&#34;special_tokens_mask&#34;] = self.get_special_tokens_mask(ids, pair_ids)
-            else:
-                encoded_inputs[&#34;special_tokens_mask&#34;] = [0] * len(sequence)
-
-        # Padding
-        if padding != PaddingStrategy.DO_NOT_PAD or return_attention_mask:
-            encoded_inputs = self.pad(
-                encoded_inputs,
-                max_length=max_length,
-                padding=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-
-        if return_length:
-            encoded_inputs[&#34;length&#34;] = len(encoded_inputs[&#34;input_ids&#34;])
-
-        batch_outputs = BatchEncoding(
-            encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis
-        )
-        
-        return batch_outputs
-    
-    def num_special_tokens_to_add(self, pair: bool = False) -&gt; int:
-        return 0 if not pair else 3
-    
-    def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -&gt; List[int]:
-        if token_ids_1 is None:
-            return token_ids_0
-        height = max(
-            self.special_tokens[&#34;CLS&#34;].shape[1], 
-            token_ids_0.shape[1],
-            self.special_tokens[&#34;SEP&#34;].shape[1], 
-            token_ids_1.shape[1],
-            self.special_tokens[&#34;SEP&#34;].shape[1]
-        )
-        
-        return np.concatenate(
-            [
-                np.pad(self.special_tokens[&#34;CLS&#34;], ((0, 0), (0, height-self.special_tokens[&#34;CLS&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(token_ids_0, ((0, 0), (0, height - token_ids_0.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(token_ids_1, ((0, 0), (0, height - token_ids_1.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-                np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0)
-            ],
-            axis=0
-        )
-    
-    def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -&gt; List[int]:
-        if token_ids_1 is None:
-            return [0 for _ in token_ids_0]
-        return [1 for _ in self.special_tokens[&#34;CLS&#34;]] + [0 for _ in token_ids_0] + [1 for _ in self.special_tokens[&#34;SEP&#34;]] + [0 for _ in token_ids_1] + [1 for _ in self.special_tokens[&#34;SEP&#34;]]
-    
-    def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, add_special_tokens: bool = True
-    ) -&gt; List[int]:
-
-        if token_ids_1 is None:
-            return len(token_ids_0) * [0]
-        return [0]*len(self.special_tokens[&#34;CLS&#34;]) + [0] * len(token_ids_0) + [0]*len(self.special_tokens[&#34;SEP&#34;]) + [1] * len(token_ids_1) + [0]*len(self.special_tokens[&#34;SEP&#34;])
-
-    def pad(
-        self,
-        encoded_inputs: Union[
-            BatchEncoding,
-            List[BatchEncoding],
-            Dict[str, EncodedInput],
-            Dict[str, List[EncodedInput]],
-            List[Dict[str, EncodedInput]],
-        ],
-        padding: Union[bool, str, PaddingStrategy] = True,
-        max_length: Optional[int] = None,
-        pad_to_multiple_of: Optional[int] = None,
-        return_attention_mask: Optional[bool] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        verbose: bool = True,
-    ) -&gt; BatchEncoding:
-
-        # If we have a list of dicts, let&#39;s convert it in a dict of lists
-        # We do this to allow using this method as a collate_fn function in PyTorch Dataloader
-        if isinstance(encoded_inputs, (list, tuple)) and isinstance(encoded_inputs[0], (dict, BatchEncoding)):
-            encoded_inputs = {key: [example[key] for example in encoded_inputs] for key in encoded_inputs[0].keys()}
-
-        # The model&#39;s main input name, usually `input_ids`, has be passed for padding
-        if self.model_input_names[0] not in encoded_inputs:
-            raise ValueError(
-                &#34;You should supply an encoding or a list of encodings to this method&#34;
-                f&#34;that includes {self.model_input_names[0]}, but you provided {list(encoded_inputs.keys())}&#34;
-            )
-
-        required_input = encoded_inputs[self.model_input_names[0]]
-
-        if required_input is None:
-            if return_attention_mask:
-                encoded_inputs[&#34;attention_mask&#34;] = []
-            return encoded_inputs
-
-        # If we have PyTorch/TF/NumPy tensors/arrays as inputs, we cast them as python objects
-        # and rebuild them afterwards if no return_tensors is specified
-        # Note that we lose the specific device the tensor may be on for PyTorch
-
-        first_element = required_input[0]
-        if isinstance(first_element, (list, tuple)):
-            # first_element might be an empty list/tuple in some edge cases so we grab the first non empty element.
-            index = 0
-            while len(required_input[index]) == 0:
-                index += 1
-            if index &lt; len(required_input):
-                first_element = required_input[index][0]
-        # At this state, if `first_element` is still a list/tuple, it&#39;s an empty one so there is nothing to do.
-        if not isinstance(first_element, (int, list, tuple)):
-            if is_torch_available() and _is_torch(first_element):
-                return_tensors = &#34;pt&#34; if return_tensors is None else return_tensors
-            elif isinstance(first_element, np.ndarray):
-                return_tensors = &#34;np&#34; if return_tensors is None else return_tensors
-            else:
-                raise ValueError(
-                    f&#34;type of {first_element} unknown: {type(first_element)}. &#34;
-                    f&#34;Should be one of a python, numpy or pytorch object.&#34;
-                )
-
-            for key, value in encoded_inputs.items():
-                encoded_inputs[key] = to_py_obj(value)
-        
-        required_input = encoded_inputs[self.model_input_names[0]]
-        if required_input and not isinstance(required_input[0], (list, tuple)):
-            encoded_inputs = self._pad(
-                encoded_inputs,
-                max_length=max_length,
-                padding_strategy=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-            return BatchEncoding(encoded_inputs, tensor_type=return_tensors)
-
-        batch_size = len(required_input)
-        assert all(
-            len(v) == batch_size for v in encoded_inputs.values()
-        ), &#34;Some items in the output dictionary have a different batch size than others.&#34;
-
-        if padding == PaddingStrategy.LONGEST:
-            max_length = max(len(inputs) for inputs in required_input)
-            padding = PaddingStrategy.MAX_LENGTH
-        
-        batch_outputs = {}
-        for i in range(batch_size):
-            inputs = dict((k, v[i]) for k, v in encoded_inputs.items())
-            outputs = self._pad(
-                inputs,
-                max_length=max_length,
-                padding_strategy=padding,
-                pad_to_multiple_of=pad_to_multiple_of,
-                return_attention_mask=return_attention_mask,
-            )
-
-            for key, value in outputs.items():
-                if key not in batch_outputs:
-                    batch_outputs[key] = []
-                batch_outputs[key].append(value)
-
-        return BatchEncoding(batch_outputs, tensor_type=return_tensors)
-
-    def _pad(
-        self,
-        encoded_inputs: Union[Dict[str, EncodedInput], BatchEncoding],
-        max_length: Optional[int] = None,
-        padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-        pad_to_multiple_of: Optional[int] = None,
-        return_attention_mask: Optional[bool] = None,
-    ) -&gt; dict:
-
-        # Load from model defaults
-        
-        if return_attention_mask is None:
-            return_attention_mask = &#34;attention_mask&#34; in self.model_input_names
-
-        required_input = encoded_inputs[self.model_input_names[0]]
-        if padding_strategy == PaddingStrategy.LONGEST:
-            max_length = len(required_input)
-
-        if max_length is not None and pad_to_multiple_of is not None and (max_length % pad_to_multiple_of != 0):
-            max_length = ((max_length // pad_to_multiple_of) + 1) * pad_to_multiple_of
-
-        needs_to_be_padded = padding_strategy != PaddingStrategy.DO_NOT_PAD and len(required_input) != max_length
-
-        if needs_to_be_padded:
-            difference = max_length - len(required_input)
-            if &#34;token_type_ids&#34; in encoded_inputs and isinstance(encoded_inputs[&#34;token_type_ids&#34;], int):
-                encoded_inputs[&#34;token_type_ids&#34;] = [encoded_inputs[&#34;token_type_ids&#34;]]
-            if self.padding_side == &#34;right&#34;:
-                if return_attention_mask:
-                    encoded_inputs[&#34;attention_mask&#34;] = [1] * len(required_input) + [0] * difference
-                if &#34;token_type_ids&#34; in encoded_inputs:
-                    encoded_inputs[&#34;token_type_ids&#34;] = (
-                        encoded_inputs[&#34;token_type_ids&#34;] + [1] * difference
-                    )
-                if &#34;special_tokens_mask&#34; in encoded_inputs:
-                    encoded_inputs[&#34;special_tokens_mask&#34;] = encoded_inputs[&#34;special_tokens_mask&#34;] + [1] * difference
-                encoded_inputs[self.model_input_names[0]] = required_input + [np.zeros((len(required_input[0]), self.width))] * difference
-            elif self.padding_side == &#34;left&#34;:
-                if return_attention_mask:
-                    encoded_inputs[&#34;attention_mask&#34;] = [0] * difference + [1] * len(required_input)
-                if &#34;token_type_ids&#34; in encoded_inputs:
-                    encoded_inputs[&#34;token_type_ids&#34;] = [0] * difference + encoded_inputs[
-                        &#34;token_type_ids&#34;
-                    ]
-                if &#34;special_tokens_mask&#34; in encoded_inputs:
-                    encoded_inputs[&#34;special_tokens_mask&#34;] = [1] * difference + encoded_inputs[&#34;special_tokens_mask&#34;]
-                encoded_inputs[self.model_input_names[0]] = [np.zeros((len(required_input[0]), self.width))] * difference + required_input
-            else:
-                raise ValueError(&#34;Invalid padding strategy:&#34; + str(self.padding_side))
-        elif return_attention_mask and &#34;attention_mask&#34; not in encoded_inputs:
-            encoded_inputs[&#34;attention_mask&#34;] = [1] * len(required_input)
-
-        return encoded_inputs</code></pre>
+        Returns
+        -------
+        np.ndarray
+            An empty array in (font_size, window_size) shape
+        &#34;&#34;&#34;
+        return np.zeros((len(input_embeddings[0]), self.window_size))</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
 </ul>
@@ -1158,501 +388,50 @@ class VTRTokenizer(PreTrainedTokenizerBase):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.build_inputs_with_special_tokens"><code class="name flex">
-<span>def <span class="ident">build_inputs_with_special_tokens</span></span>(<span>self, token_ids_0: List[int], token_ids_1: Union[List[int], NoneType] = None) ‑> List[int]</span>
+<dt id="text_embeddings.visual.vtr.VTRTokenizer.create_padding_token_embedding"><code class="name flex">
+<span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
-adding special tokens.</p>
-<p>This implementation does not add special tokens and this method should be overridden in a subclass.</p>
-<h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>): The first tokenized sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tokenized sequence.</p>
-<h2 id="returns">Returns</h2>
-<p>:obj:<code>List[int]</code>: The model input with special tokens.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def build_inputs_with_special_tokens(
-    self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-) -&gt; List[int]:
-    if token_ids_1 is None:
-        return token_ids_0
-    height = max(
-        self.special_tokens[&#34;CLS&#34;].shape[1], 
-        token_ids_0.shape[1],
-        self.special_tokens[&#34;SEP&#34;].shape[1], 
-        token_ids_1.shape[1],
-        self.special_tokens[&#34;SEP&#34;].shape[1]
-    )
-    
-    return np.concatenate(
-        [
-            np.pad(self.special_tokens[&#34;CLS&#34;], ((0, 0), (0, height-self.special_tokens[&#34;CLS&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-            np.pad(token_ids_0, ((0, 0), (0, height - token_ids_0.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-            np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-            np.pad(token_ids_1, ((0, 0), (0, height - token_ids_1.shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0),
-            np.pad(self.special_tokens[&#34;SEP&#34;], ((0, 0), (0, height - self.special_tokens[&#34;SEP&#34;].shape[1]), (0, 0)), &#39;constant&#39;, constant_values=0)
-        ],
-        axis=0
-    )</code></pre>
-</details>
-</dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.create_token_type_ids_from_sequences"><code class="name flex">
-<span>def <span class="ident">create_token_type_ids_from_sequences</span></span>(<span>self, token_ids_0: List[int], token_ids_1: Union[List[int], NoneType] = None, add_special_tokens: bool = True) ‑> List[int]</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Create the token type IDs corresponding to the sequences passed. <code>What are token type IDs?
-&lt;../glossary.html#token-type-ids&gt;</code>__</p>
-<p>Should be overridden in a subclass if the model has a special way of building those.</p>
-<h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>): The first tokenized sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tokenized sequence.</p>
-<h2 id="returns">Returns</h2>
-<p>:obj:<code>List[int]</code>: The token type ids.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def create_token_type_ids_from_sequences(
-    self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, add_special_tokens: bool = True
-) -&gt; List[int]:
-
-    if token_ids_1 is None:
-        return len(token_ids_0) * [0]
-    return [0]*len(self.special_tokens[&#34;CLS&#34;]) + [0] * len(token_ids_0) + [0]*len(self.special_tokens[&#34;SEP&#34;]) + [1] * len(token_ids_1) + [0]*len(self.special_tokens[&#34;SEP&#34;])</code></pre>
-</details>
-</dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.get_special_tokens_mask"><code class="name flex">
-<span>def <span class="ident">get_special_tokens_mask</span></span>(<span>self, token_ids_0: List[int], token_ids_1: Union[List[int], NoneType] = None) ‑> List[int]</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
-special tokens using the tokenizer <code>prepare_for_model</code> or <code>encode_plus</code> methods.</p>
-<h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>):
-List of ids of the first sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>):
-List of ids of the second sequence.
-already_has_special_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not the token list is already formatted with special tokens for the model.</p>
+<div class="desc"><p>Create a padding token embedding for an empty window.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>[type]</code>, optional</dt>
+<dd>Embeddings already encoded, by default None</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>A list</code> of <code>integers in the range [0, 1]</code></dt>
-<dd>1 for a special token, 0 for a sequence token.</dd>
+<dt><code>np.ndarray</code></dt>
+<dd>An empty array in (font_size, window_size) shape</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_special_tokens_mask(
-    self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-) -&gt; List[int]:
-    if token_ids_1 is None:
-        return [0 for _ in token_ids_0]
-    return [1 for _ in self.special_tokens[&#34;CLS&#34;]] + [0 for _ in token_ids_0] + [1 for _ in self.special_tokens[&#34;SEP&#34;]] + [0 for _ in token_ids_1] + [1 for _ in self.special_tokens[&#34;SEP&#34;]]</code></pre>
+<pre><code class="python">def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+    &#34;&#34;&#34;Create a padding token embedding for an empty window.
+
+    Parameters
+    ----------
+    input_embeddings : [type], optional
+        Embeddings already encoded, by default None
+
+    Returns
+    -------
+    np.ndarray
+        An empty array in (font_size, window_size) shape
+    &#34;&#34;&#34;
+    return np.zeros((len(input_embeddings[0]), self.window_size))</code></pre>
 </details>
 </dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.num_special_tokens_to_add"><code class="name flex">
-<span>def <span class="ident">num_special_tokens_to_add</span></span>(<span>self, pair: bool = False) ‑> int</span>
+<dt id="text_embeddings.visual.vtr.VTRTokenizer.text2embeddings"><code class="name flex">
+<span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def num_special_tokens_to_add(self, pair: bool = False) -&gt; int:
-    return 0 if not pair else 3</code></pre>
-</details>
-</dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.pad"><code class="name flex">
-<span>def <span class="ident">pad</span></span>(<span>self, encoded_inputs: Union[transformers.tokenization_utils_base.BatchEncoding, List[transformers.tokenization_utils_base.BatchEncoding], Dict[str, List[int]], Dict[str, List[List[int]]], List[Dict[str, List[int]]]], padding: Union[bool, str, transformers.file_utils.PaddingStrategy] = True, max_length: Union[int, NoneType] = None, pad_to_multiple_of: Union[int, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_tensors: Union[str, transformers.file_utils.TensorType, NoneType] = None, verbose: bool = True) ‑> transformers.tokenization_utils_base.BatchEncoding</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Pad a single encoded input or a batch of encoded inputs up to predefined length or to the max sequence length
-in the batch.</p>
-<p>Padding side (left/right) padding token ids are defined at the tokenizer level (with <code>self.padding_side</code>,
-<code>self.pad_token_id</code> and <code>self.pad_token_type_id</code>)</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If the <code>encoded_inputs</code> passed are dictionary of numpy arrays, PyTorch tensors or TensorFlow tensors, the
-result will use the same type unless you provide a different tensor type with <code>return_tensors</code>. In the
-case of PyTorch tensors, you will lose the specific device of your tensors however.</p>
-</div>
-<h2 id="args">Args</h2>
-<p>encoded_inputs (:class:<code>~transformers.BatchEncoding</code>, list of :class:<code>~transformers.BatchEncoding</code>, :obj:<code>Dict[str, List[int]]</code>, :obj:<code>Dict[str, List[List[int]]</code> or :obj:<code>List[Dict[str, List[int]]]</code>):
-Tokenized inputs. Can represent one input (:class:<code>~transformers.BatchEncoding</code> or :obj:<code>Dict[str,
-List[int]]</code>) or a batch of tokenized inputs (list of :class:<code>~transformers.BatchEncoding&lt;code&gt;, &lt;/code&gt;Dict[str,
-List[List[int]]]&lt;code&gt; or &lt;/code&gt;List[Dict[str, List[int]]]</code>) so you can use this method during preprocessing as
-well as in a PyTorch Dataloader collate function.</p>
-<pre><code>Instead of :obj:&lt;code&gt;List\[int]&lt;/code&gt; you can have tensors (numpy arrays, PyTorch tensors or TensorFlow tensors),
-see the note above for the return type.
-</code></pre>
-<p>padding (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.file_utils.PaddingStrategy</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
-Select a strategy to pad the returned sequences (according to the model's padding side and padding
-index) among:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest'`: Pad to the longest sequence in the batch (or no padding if only a
-  single sequence if provided).
-* :obj:`'max_length'`: Pad to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the
-  maximum acceptable input length for the model if that argument is not provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of
-  different lengths).
-</code></pre>
-<p>max_length (:obj:<code>int</code>, <code>optional</code>):
-Maximum length of the returned list and optionally padding length (see above).
-pad_to_multiple_of (:obj:<code>int</code>, <code>optional</code>):
-If set will pad the sequence to a multiple of the provided value.</p>
-<pre><code>This is especially useful to enable the use of Tensor Cores on NVIDIA hardware with compute capability
-&gt;= 7.5 (Volta).
-</code></pre>
-<p>return_attention_mask (:obj:<code>bool</code>, <code>optional</code>):
-Whether to return the attention mask. If left to the default, will return the attention mask according
-to the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are attention masks? &lt;../glossary.html#attention-mask&gt;`__
-</code></pre>
-<p>return_tensors (:obj:<code>str</code> or :class:<code>~transformers.file_utils.TensorType</code>, <code>optional</code>):
-If set, will return tensors instead of list of python integers. Acceptable values are:</p>
-<pre><code>* :obj:`'tf'`: Return TensorFlow :obj:&lt;code&gt;tf.constant&lt;/code&gt; objects.
-* :obj:`'pt'`: Return PyTorch :obj:&lt;code&gt;torch.Tensor&lt;/code&gt; objects.
-* :obj:`'np'`: Return Numpy :obj:&lt;code&gt;np.ndarray&lt;/code&gt; objects.
-</code></pre>
-<p>verbose (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
-Whether or not to print more information and warnings.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def pad(
-    self,
-    encoded_inputs: Union[
-        BatchEncoding,
-        List[BatchEncoding],
-        Dict[str, EncodedInput],
-        Dict[str, List[EncodedInput]],
-        List[Dict[str, EncodedInput]],
-    ],
-    padding: Union[bool, str, PaddingStrategy] = True,
-    max_length: Optional[int] = None,
-    pad_to_multiple_of: Optional[int] = None,
-    return_attention_mask: Optional[bool] = None,
-    return_tensors: Optional[Union[str, TensorType]] = None,
-    verbose: bool = True,
-) -&gt; BatchEncoding:
-
-    # If we have a list of dicts, let&#39;s convert it in a dict of lists
-    # We do this to allow using this method as a collate_fn function in PyTorch Dataloader
-    if isinstance(encoded_inputs, (list, tuple)) and isinstance(encoded_inputs[0], (dict, BatchEncoding)):
-        encoded_inputs = {key: [example[key] for example in encoded_inputs] for key in encoded_inputs[0].keys()}
-
-    # The model&#39;s main input name, usually `input_ids`, has be passed for padding
-    if self.model_input_names[0] not in encoded_inputs:
-        raise ValueError(
-            &#34;You should supply an encoding or a list of encodings to this method&#34;
-            f&#34;that includes {self.model_input_names[0]}, but you provided {list(encoded_inputs.keys())}&#34;
-        )
-
-    required_input = encoded_inputs[self.model_input_names[0]]
-
-    if required_input is None:
-        if return_attention_mask:
-            encoded_inputs[&#34;attention_mask&#34;] = []
-        return encoded_inputs
-
-    # If we have PyTorch/TF/NumPy tensors/arrays as inputs, we cast them as python objects
-    # and rebuild them afterwards if no return_tensors is specified
-    # Note that we lose the specific device the tensor may be on for PyTorch
-
-    first_element = required_input[0]
-    if isinstance(first_element, (list, tuple)):
-        # first_element might be an empty list/tuple in some edge cases so we grab the first non empty element.
-        index = 0
-        while len(required_input[index]) == 0:
-            index += 1
-        if index &lt; len(required_input):
-            first_element = required_input[index][0]
-    # At this state, if `first_element` is still a list/tuple, it&#39;s an empty one so there is nothing to do.
-    if not isinstance(first_element, (int, list, tuple)):
-        if is_torch_available() and _is_torch(first_element):
-            return_tensors = &#34;pt&#34; if return_tensors is None else return_tensors
-        elif isinstance(first_element, np.ndarray):
-            return_tensors = &#34;np&#34; if return_tensors is None else return_tensors
-        else:
-            raise ValueError(
-                f&#34;type of {first_element} unknown: {type(first_element)}. &#34;
-                f&#34;Should be one of a python, numpy or pytorch object.&#34;
-            )
-
-        for key, value in encoded_inputs.items():
-            encoded_inputs[key] = to_py_obj(value)
-    
-    required_input = encoded_inputs[self.model_input_names[0]]
-    if required_input and not isinstance(required_input[0], (list, tuple)):
-        encoded_inputs = self._pad(
-            encoded_inputs,
-            max_length=max_length,
-            padding_strategy=padding,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_attention_mask=return_attention_mask,
-        )
-        return BatchEncoding(encoded_inputs, tensor_type=return_tensors)
-
-    batch_size = len(required_input)
-    assert all(
-        len(v) == batch_size for v in encoded_inputs.values()
-    ), &#34;Some items in the output dictionary have a different batch size than others.&#34;
-
-    if padding == PaddingStrategy.LONGEST:
-        max_length = max(len(inputs) for inputs in required_input)
-        padding = PaddingStrategy.MAX_LENGTH
-    
-    batch_outputs = {}
-    for i in range(batch_size):
-        inputs = dict((k, v[i]) for k, v in encoded_inputs.items())
-        outputs = self._pad(
-            inputs,
-            max_length=max_length,
-            padding_strategy=padding,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_attention_mask=return_attention_mask,
-        )
-
-        for key, value in outputs.items():
-            if key not in batch_outputs:
-                batch_outputs[key] = []
-            batch_outputs[key].append(value)
-
-    return BatchEncoding(batch_outputs, tensor_type=return_tensors)</code></pre>
-</details>
-</dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.prepare_for_model"><code class="name flex">
-<span>def <span class="ident">prepare_for_model</span></span>(<span>self, ids: List[int], pair_ids: Union[List[int], NoneType] = None, add_special_tokens: bool = True, padding: Union[bool, str, transformers.file_utils.PaddingStrategy] = False, truncation: Union[bool, str, transformers.tokenization_utils_base.TruncationStrategy] = False, max_length: Union[int, NoneType] = None, stride: int = 0, pad_to_multiple_of: Union[int, NoneType] = None, return_tensors: Union[str, transformers.file_utils.TensorType, NoneType] = None, return_token_type_ids: Union[bool, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_overflowing_tokens: bool = False, return_special_tokens_mask: bool = False, return_length: bool = False, prepend_batch_axis: bool = False, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Prepares a sequence of input id, or a pair of sequences of inputs ids so that it can be used by the model. It
-adds special tokens, truncates sequences if overflowing while taking into account the special tokens and
-manages a moving window (with user defined stride) for overflowing tokens</p>
-<h2 id="args">Args</h2>
-<p>ids (:obj:<code>List[int]</code>):
-Tokenized input ids of the first sequence. Can be obtained from a string by chaining the <code>tokenize</code>
-and <code>convert_tokens_to_ids</code> methods.
-pair_ids (:obj:<code>List[int]</code>, <code>optional</code>):
-Tokenized input ids of the second sequence. Can be obtained from a string by chaining the <code>tokenize</code>
-and <code>convert_tokens_to_ids</code> methods.</p>
-<p>add_special_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
-Whether or not to encode the sequences with the special tokens relative to their model.
-padding (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.file_utils.PaddingStrategy</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Activates and controls padding. Accepts the following values:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest'`: Pad to the longest sequence in the batch (or no padding if only a
-  single sequence if provided).
-* :obj:`'max_length'`: Pad to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the
-  maximum acceptable input length for the model if that argument is not provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of
-  different lengths).
-</code></pre>
-<p>truncation (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.tokenization_utils_base.TruncationStrategy</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Activates and controls truncation. Accepts the following values:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest_first'`: Truncate to a maximum length specified with the argument
-  :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the maximum acceptable input length for the model if that argument is not
-  provided. This will truncate token by token, removing a token from the longest sequence in the pair
-  if a pair of sequences (or a batch of pairs) is provided.
-* :obj:`'only_first'`: Truncate to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to
-  the maximum acceptable input length for the model if that argument is not provided. This will only
-  truncate the first sequence of a pair if a pair of sequences (or a batch of pairs) is provided.
-* :obj:`'only_second'`: Truncate to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or
-  to the maximum acceptable input length for the model if that argument is not provided. This will only
-  truncate the second sequence of a pair if a pair of sequences (or a batch of pairs) is provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_truncate'` (default): No truncation (i.e., can output batch with
-  sequence lengths greater than the model maximum admissible input size).
-</code></pre>
-<p>max_length (:obj:<code>int</code>, <code>optional</code>):
-Controls the maximum length to use by one of the truncation/padding parameters.</p>
-<pre><code>If left unset or set to :obj:&lt;code&gt;None&lt;/code&gt;, this will use the predefined model maximum length if a maximum
-length is required by one of the truncation/padding parameters. If the model has no specific maximum
-input length (like XLNet) truncation/padding to a maximum length will be deactivated.
-</code></pre>
-<p>stride (:obj:<code>int</code>, <code>optional</code>, defaults to 0):
-If set to a number along with :obj:<code>max_length</code>, the overflowing tokens returned when
-:obj:<code>return_overflowing_tokens=True</code> will contain some tokens from the end of the truncated sequence
-returned to provide some overlap between truncated and overflowing sequences. The value of this
-argument defines the number of overlapping tokens.
-is_split_into_words (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not the input is already pre-tokenized (e.g., split into words), in which case the tokenizer
-will skip the pre-tokenization step. This is useful for NER or token classification.
-pad_to_multiple_of (:obj:<code>int</code>, <code>optional</code>):
-If set will pad the sequence to a multiple of the provided value. This is especially useful to enable
-the use of Tensor Cores on NVIDIA hardware with compute capability &gt;= 7.5 (Volta).
-return_tensors (:obj:<code>str</code> or :class:<code>~transformers.file_utils.TensorType</code>, <code>optional</code>):
-If set, will return tensors instead of list of python integers. Acceptable values are:</p>
-<pre><code>* :obj:`'tf'`: Return TensorFlow :obj:&lt;code&gt;tf.constant&lt;/code&gt; objects.
-* :obj:`'pt'`: Return PyTorch :obj:&lt;code&gt;torch.Tensor&lt;/code&gt; objects.
-* :obj:`'np'`: Return Numpy :obj:&lt;code&gt;np.ndarray&lt;/code&gt; objects.
-</code></pre>
-<p>return_token_type_ids (:obj:<code>bool</code>, <code>optional</code>):
-Whether to return token type IDs. If left to the default, will return the token type IDs according to
-the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are token type IDs? &lt;../glossary.html#token-type-ids&gt;`__
-</code></pre>
-<p>return_attention_mask (:obj:<code>bool</code>, <code>optional</code>):
-Whether to return the attention mask. If left to the default, will return the attention mask according
-to the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are attention masks? &lt;../glossary.html#attention-mask&gt;`__
-</code></pre>
-<p>return_overflowing_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not to return overflowing token sequences.
-return_special_tokens_mask (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not to return special tokens mask information.
-return_offsets_mapping (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not to return :obj:<code>(char_start, char_end)</code> for each token.</p>
-<pre><code>This is only available on fast tokenizers inheriting from
-:class:`~transformers.PreTrainedTokenizerFast`, if using Python's tokenizer, this method will raise
-:obj:&lt;code&gt;NotImplementedError&lt;/code&gt;.
-</code></pre>
-<dl>
-<dt>return_length
-(:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):</dt>
-<dt>Whether or not to return the lengths of the encoded inputs.</dt>
-<dt>verbose (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):</dt>
-<dt>Whether or not to print more information and warnings.</dt>
-<dt><strong><code>**kwargs</code></strong></dt>
-<dd>passed to the :obj:<code>self.tokenize()</code> method</dd>
-</dl>
-<h2 id="return">Return</h2>
-<p>:class:<code>~transformers.BatchEncoding</code>: A :class:<code>~transformers.BatchEncoding</code> with the following fields:</p>
-<ul>
-<li><strong>input_ids</strong> &ndash; List of token ids to be fed to a model.</li>
-</ul>
-<p><code>What are input IDs? &lt;../glossary.html#input-ids&gt;</code>__</p>
-<ul>
-<li><strong>token_type_ids</strong> &ndash; List of token type ids to be fed to a model (when :obj:<code>return_token_type_ids=True</code>
-or if <code>"token_type_ids"</code> is in :obj:<code>self.model_input_names</code>).</li>
-</ul>
-<p><code>What are token type IDs? &lt;../glossary.html#token-type-ids&gt;</code>__</p>
-<ul>
-<li><strong>attention_mask</strong> &ndash; List of indices specifying which tokens should be attended to by the model (when
-:obj:<code>return_attention_mask=True</code> or if <code>"attention_mask"</code> is in :obj:<code>self.model_input_names</code>).</li>
-</ul>
-<p><code>What are attention masks? &lt;../glossary.html#attention-mask&gt;</code>__</p>
-<ul>
-<li><strong>overflowing_tokens</strong> &ndash; List of overflowing tokens sequences (when a :obj:<code>max_length</code> is specified and
-:obj:<code>return_overflowing_tokens=True</code>).</li>
-<li><strong>num_truncated_tokens</strong> &ndash; Number of tokens truncated (when a :obj:<code>max_length</code> is specified and
-:obj:<code>return_overflowing_tokens=True</code>).</li>
-<li><strong>special_tokens_mask</strong> &ndash; List of 0s and 1s, with 1 specifying added special tokens and 0 specifying
-regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj:<code>return_special_tokens_mask=True</code>).</li>
-<li><strong>length</strong> &ndash; The length of the inputs (when :obj:<code>return_length=True</code>)</li>
-</ul></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def prepare_for_model(
-    self,
-    ids: List[int],
-    pair_ids: Optional[List[int]] = None,
-    add_special_tokens: bool = True,
-    padding: Union[bool, str, PaddingStrategy] = False,
-    truncation: Union[bool, str, TruncationStrategy] = False,
-    max_length: Optional[int] = None,
-    stride: int = 0,
-    pad_to_multiple_of: Optional[int] = None,
-    return_tensors: Optional[Union[str, TensorType]] = None,
-    return_token_type_ids: Optional[bool] = None,
-    return_attention_mask: Optional[bool] = None,
-    return_overflowing_tokens: bool = False,
-    return_special_tokens_mask: bool = False,
-    return_length: bool = False,
-    prepend_batch_axis: bool = False,
-    **kwargs
-):
-
-    pair = bool(pair_ids is not None)
-    len_ids = len(ids)
-    len_pair_ids = len(pair_ids) if pair else 0
-    if return_token_type_ids and not add_special_tokens:
-        raise ValueError(
-            &#34;Asking to return token_type_ids while setting add_special_tokens to False &#34;
-            &#34;results in an undefined behavior. Please set add_special_tokens to True or &#34;
-            &#34;set return_token_type_ids to None.&#34;
-        )
-
-    # Load from model defaults
-    if return_token_type_ids is None:
-        return_token_type_ids = &#34;token_type_ids&#34; in self.model_input_names
-    if return_attention_mask is None:
-        return_attention_mask = &#34;attention_mask&#34; in self.model_input_names
-
-    encoded_inputs = {}
-
-    # Compute the total size of the returned encodings
-    total_len = len_ids + len_pair_ids + (self.num_special_tokens_to_add(pair=pair) if add_special_tokens else 0)
-
-    # Truncation: Handle max sequence length
-    overflowing_tokens = []
-    if truncation != TruncationStrategy.DO_NOT_TRUNCATE and max_length and total_len &gt; max_length:
-        ids, pair_ids, overflowing_tokens = self.truncate_sequences(
-            ids,
-            pair_ids=pair_ids,
-            num_tokens_to_remove=total_len - max_length,
-            truncation_strategy=truncation,
-            stride=stride,
-        )
-
-    if return_overflowing_tokens:
-        encoded_inputs[&#34;overflowing_tokens&#34;] = overflowing_tokens
-        encoded_inputs[&#34;num_truncated_tokens&#34;] = total_len - max_length
-
-    # Add special tokens
-    if add_special_tokens:
-        sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
-        token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
-    else:
-        sequence = np.concatenate([ids, pair_ids], axis=0) if pair is True else ids
-        token_type_ids = [0] * len(ids) + ([0] * len(pair_ids) if pair else [])
-
-    # Build output dictionary
-    encoded_inputs[&#34;input_ids&#34;] = sequence
-
-    if return_token_type_ids:
-        encoded_inputs[&#34;token_type_ids&#34;] = token_type_ids
-    if return_special_tokens_mask:
-        if add_special_tokens:
-            encoded_inputs[&#34;special_tokens_mask&#34;] = self.get_special_tokens_mask(ids, pair_ids)
-        else:
-            encoded_inputs[&#34;special_tokens_mask&#34;] = [0] * len(sequence)
-
-    # Padding
-    if padding != PaddingStrategy.DO_NOT_PAD or return_attention_mask:
-        encoded_inputs = self.pad(
-            encoded_inputs,
-            max_length=max_length,
-            padding=padding,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_attention_mask=return_attention_mask,
-        )
-
-    if return_length:
-        encoded_inputs[&#34;length&#34;] = len(encoded_inputs[&#34;input_ids&#34;])
-
-    batch_outputs = BatchEncoding(
-        encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis
-    )
-    
-    return batch_outputs</code></pre>
-</details>
-</dd>
-<dt id="text_embeddings.visual.vtr.VTRTokenizer.text2blocks"><code class="name flex">
-<span>def <span class="ident">text2blocks</span></span>(<span>self, text: str, stride: int) ‑> numpy.ndarray</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Convert text into an numpy array, in (sequence_length, height, width) shape.</p>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
 <dd>Input text</dd>
-<dt><strong><code>stride</code></strong> :&ensp;<code>int</code></dt>
-<dd>Stride for image block generation</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -1663,15 +442,13 @@ regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def text2blocks(self, text: str, stride: int) -&gt; np.ndarray:
-    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, height, width) shape.
+<pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.
 
     Parameters
     ----------
     text : str
         Input text
-    stride : int
-        Stride for image block generation
 
     Returns
     -------
@@ -1680,17 +457,29 @@ regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj
     &#34;&#34;&#34;
     if not text:
         return None
-    
-    image = text2image(text, font=self.font, font_size=self.height)
+
+    image = text2image(text, font=self.font, font_size=self.font_size)
     image_array = np.asarray(image)
 
     return np.squeeze(
-        sliding_window_view(image_array, (image_array.shape[0], self.width)),
+        sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
         axis=0,
-    )[::stride]</code></pre>
+    )[:: self.stride]</code></pre>
 </details>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></b></code>:
+<ul class="hlist">
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.pad" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.pad">pad</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.prepare_for_model" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.prepare_for_model">prepare_for_model</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -1716,18 +505,13 @@ regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj
 <li>
 <h4><code><a title="text_embeddings.visual.vtr.VTRTokenizer" href="#text_embeddings.visual.vtr.VTRTokenizer">VTRTokenizer</a></code></h4>
 <ul class="">
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.build_inputs_with_special_tokens" href="#text_embeddings.visual.vtr.VTRTokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.create_token_type_ids_from_sequences" href="#text_embeddings.visual.vtr.VTRTokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.get_special_tokens_mask" href="#text_embeddings.visual.vtr.VTRTokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
+<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.create_padding_token_embedding" href="#text_embeddings.visual.vtr.VTRTokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.max_model_input_sizes" href="#text_embeddings.visual.vtr.VTRTokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.model_input_names" href="#text_embeddings.visual.vtr.VTRTokenizer.model_input_names">model_input_names</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.num_special_tokens_to_add" href="#text_embeddings.visual.vtr.VTRTokenizer.num_special_tokens_to_add">num_special_tokens_to_add</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.pad" href="#text_embeddings.visual.vtr.VTRTokenizer.pad">pad</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.padding_side" href="#text_embeddings.visual.vtr.VTRTokenizer.padding_side">padding_side</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.prepare_for_model" href="#text_embeddings.visual.vtr.VTRTokenizer.prepare_for_model">prepare_for_model</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.pretrained_init_configuration" href="#text_embeddings.visual.vtr.VTRTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.pretrained_vocab_files_map" href="#text_embeddings.visual.vtr.VTRTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
-<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.text2blocks" href="#text_embeddings.visual.vtr.VTRTokenizer.text2blocks">text2blocks</a></code></li>
+<li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.text2embeddings" href="#text_embeddings.visual.vtr.VTRTokenizer.text2embeddings">text2embeddings</a></code></li>
 <li><code><a title="text_embeddings.visual.vtr.VTRTokenizer.vocab_files_names" href="#text_embeddings.visual.vtr.VTRTokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>
