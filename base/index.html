@@ -84,7 +84,7 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
 
     @abc.abstractmethod
     def text2embeddings(self, text: str) -&gt; np.ndarray:
-        return
+        raise NotImplementedError(&#39;This function is not implemented&#39;)
 
     def __call__(
         self,
@@ -160,7 +160,7 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
         if isinstance(truncation, str):
             truncation = TruncationStrategy(truncation)
 
-        for first_text, second_text in zip_longest(text, text_pair):
+        for first_text, second_text in zip_longest(text, text_pair, fillvalue=None):
             
             first_embeddings = self.text2embeddings(first_text)
             second_embeddings = self.text2embeddings(second_text)
@@ -581,7 +581,7 @@ This implementation borrows most implementation from huggingface's transformers 
 
     @abc.abstractmethod
     def text2embeddings(self, text: str) -&gt; np.ndarray:
-        return
+        raise NotImplementedError(&#39;This function is not implemented&#39;)
 
     def __call__(
         self,
@@ -657,7 +657,7 @@ This implementation borrows most implementation from huggingface's transformers 
         if isinstance(truncation, str):
             truncation = TruncationStrategy(truncation)
 
-        for first_text, second_text in zip_longest(text, text_pair):
+        for first_text, second_text in zip_longest(text, text_pair, fillvalue=None):
             
             first_embeddings = self.text2embeddings(first_text)
             second_embeddings = self.text2embeddings(second_text)
@@ -1522,7 +1522,7 @@ regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj
 </summary>
 <pre><code class="python">@abc.abstractmethod
 def text2embeddings(self, text: str) -&gt; np.ndarray:
-    return</code></pre>
+    raise NotImplementedError(&#39;This function is not implemented&#39;)</code></pre>
 </details>
 </dd>
 </dl>
