@@ -58,8 +58,22 @@ def get_more_bits(hash1, hash2):
     return newlow, newhigh
 
 
-def murmurhash(token: str, feature_size: int = 512):
+def murmurhash(token: str, feature_size: int = 512) -&gt; List[int]:
+    &#34;&#34;&#34;
+    Hash a token into a list of feature_size integers (-1, 0, or 1).
 
+    Parameters
+    ----------
+    token : str
+        Input token string
+    feature_size : int, optional
+        The target size of the hash embedding, by default 512
+
+    Returns
+    -------
+    List[int]
+        A list of feature_size trinary integers
+    &#34;&#34;&#34;
     hash_low = 0
     hash_high = 0
     hash_codes = []
@@ -111,16 +125,42 @@ def murmurhash(token: str, feature_size: int = 512):
 </details>
 </dd>
 <dt id="text_embeddings.hash.util.murmurhash"><code class="name flex">
-<span>def <span class="ident">murmurhash</span></span>(<span>token: str, feature_size: int = 512)</span>
+<span>def <span class="ident">murmurhash</span></span>(<span>token: str, feature_size: int = 512) ‑> List[int]</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Hash a token into a list of feature_size integers (-1, 0, or 1).</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>token</code></strong> :&ensp;<code>str</code></dt>
+<dd>Input token string</dd>
+<dt><strong><code>feature_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The target size of the hash embedding, by default 512</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List[int]</code></dt>
+<dd>A list of feature_size trinary integers</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def murmurhash(token: str, feature_size: int = 512):
+<pre><code class="python">def murmurhash(token: str, feature_size: int = 512) -&gt; List[int]:
+    &#34;&#34;&#34;
+    Hash a token into a list of feature_size integers (-1, 0, or 1).
 
+    Parameters
+    ----------
+    token : str
+        Input token string
+    feature_size : int, optional
+        The target size of the hash embedding, by default 512
+
+    Returns
+    -------
+    List[int]
+        A list of feature_size trinary integers
+    &#34;&#34;&#34;
     hash_low = 0
     hash_high = 0
     hash_codes = []

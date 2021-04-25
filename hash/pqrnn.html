@@ -38,7 +38,7 @@ import numpy as np
 from typing import Optional, List, Dict
 from text_embeddings.hash.util import murmurhash
 from text_embeddings.base import EmbeddingTokenizer
-
+from loguru import logger
 
 class PQRNNTokenizer(EmbeddingTokenizer):
     &#34;&#34;&#34;
@@ -49,9 +49,9 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     hash_size : int, optional
         The size of the hashing embedding, by default 768
     model_input_names : Optional[List[str]], optional
-        Required inputs of the downstream model, by default None
+        Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
     special_tokens : Optional[Dict[str, np.ndarray]], optional
-        Special tokens for the downstream model, by default None
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
     max_length : Optional[int], optional
         Maximum token length, by default 2048
     
@@ -61,7 +61,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = PQRNNTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768)
     &#34;&#34;&#34;
 
 
@@ -79,7 +79,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
         self.max_length = max_length
         
         if self.model_input_names is None:
-            # TODO: Assume the model takes BERT-like parameters
+            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
     def text2embeddings(self, text: str) -&gt; np.ndarray:
@@ -142,9 +142,9 @@ class PQRNNTokenizer(EmbeddingTokenizer):
 <dt><strong><code>hash_size</code></strong> :&ensp;<code>int</code>, optional</dt>
 <dd>The size of the hashing embedding, by default 768</dd>
 <dt><strong><code>model_input_names</code></strong> :&ensp;<code>Optional[List[str]]</code>, optional</dt>
-<dd>Required inputs of the downstream model, by default None</dd>
+<dd>Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]</dd>
 <dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
-<dd>Special tokens for the downstream model, by default None</dd>
+<dd>Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}</dd>
 <dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
 <dd>Maximum token length, by default 2048</dd>
 </dl>
@@ -153,7 +153,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = PQRNNTokenizer()
 &gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-&gt;&gt;&gt; assert results['input_ids'].shape == (2, 4, 768), results['input_ids'].shape
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 4, 768)
 </code></pre></div>
 <details class="source">
 <summary>
@@ -168,9 +168,9 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     hash_size : int, optional
         The size of the hashing embedding, by default 768
     model_input_names : Optional[List[str]], optional
-        Required inputs of the downstream model, by default None
+        Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
     special_tokens : Optional[Dict[str, np.ndarray]], optional
-        Special tokens for the downstream model, by default None
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
     max_length : Optional[int], optional
         Maximum token length, by default 2048
     
@@ -180,7 +180,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = PQRNNTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768)
     &#34;&#34;&#34;
 
 
@@ -198,7 +198,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
         self.max_length = max_length
         
         if self.model_input_names is None:
-            # TODO: Assume the model takes BERT-like parameters
+            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
     def text2embeddings(self, text: str) -&gt; np.ndarray:
