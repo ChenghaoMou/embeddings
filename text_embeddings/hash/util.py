@@ -29,8 +29,22 @@ def get_more_bits(hash1, hash2):
     return newlow, newhigh
 
 
-def murmurhash(token: str, feature_size: int = 512):
+def murmurhash(token: str, feature_size: int = 512) -> List[int]:
+    """
+    Hash a token into a list of feature_size integers (-1, 0, or 1).
 
+    Parameters
+    ----------
+    token : str
+        Input token string
+    feature_size : int, optional
+        The target size of the hash embedding, by default 512
+
+    Returns
+    -------
+    List[int]
+        A list of feature_size trinary integers
+    """
     hash_low = 0
     hash_high = 0
     hash_codes = []

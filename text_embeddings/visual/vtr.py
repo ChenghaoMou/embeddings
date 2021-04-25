@@ -13,6 +13,7 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 from numpy.lib.stride_tricks import sliding_window_view
+from loguru import logger
 
 from text_embeddings.base import EmbeddingTokenizer
 
@@ -61,9 +62,9 @@ class VTRTokenizer(EmbeddingTokenizer):
     font_size : int, optional
         The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
-        Required inputs for the downstream model, by default None
+        Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]
     special_tokens : Optional[Dict[str, np.ndarray]], optional
-        Special tokens for the downstream model, by default None
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}
     max_length : Optional[int], optional
         Maximum sequence length, by default 25
 
@@ -93,7 +94,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         self.font = font
 
         if self.model_input_names is None:
-            # TODO: Assume the model takes BERT-like parameters
+            logger.warning('Using default model_input_names values ["input_ids", "token_type_ids", "attention_mask"]')
             self.model_input_names = ["input_ids", "token_type_ids", "attention_mask"]
 
     def text2embeddings(self, text: str) -> np.ndarray:
