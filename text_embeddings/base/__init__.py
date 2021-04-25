@@ -55,7 +55,7 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
 
     @abc.abstractmethod
     def text2embeddings(self, text: str) -> np.ndarray:
-        return
+        raise NotImplementedError('This function is not implemented')
 
     def __call__(
         self,
@@ -131,7 +131,7 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
         if isinstance(truncation, str):
             truncation = TruncationStrategy(truncation)
 
-        for first_text, second_text in zip_longest(text, text_pair):
+        for first_text, second_text in zip_longest(text, text_pair, fillvalue=None):
             
             first_embeddings = self.text2embeddings(first_text)
             second_embeddings = self.text2embeddings(second_text)

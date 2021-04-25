@@ -1,5 +1,6 @@
 # VSCode
-.vs_code
+.vscode/*
+*logs
 .coverage
 
 # Byte-compiled / optimized / DLL files
