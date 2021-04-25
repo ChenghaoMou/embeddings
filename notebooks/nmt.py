@@ -108,14 +108,14 @@ class MinimalTranslator(pl.LightningModule):
     def __init__(
         self,
         d_model: int = 512,
-        nhead: int = 8,
+        nhead: int = 2,
         num_encoder_layers: int = 6,
         num_decoder_layers: int = 6,
         dim_feedforward: int = 2048,
-        dropout: float = 0.1,
+        dropout: float = 0.4,
         activation: str = "relu",
         target_vocab_length: int = 60000,
-        lr: float = 0.1,
+        lr: float = 1e-3,
         conv_kernel_size=3,
         use_src_embedding: bool = False,
         source_vocab_length: int = 60000,
@@ -296,9 +296,14 @@ class MinimalTranslator(pl.LightningModule):
 
 
 class MTDataset(Dataset):
-    def __init__(self, src, tgt):
+    def __init__(self, src, tgt, target_tokenizer):
+        
         self.src_data = [line for line in Path(src).read_text().split("\n") if line]
         self.tgt_data = [line for line in Path(tgt).read_text().split("\n") if line]
+
+        order = sorted(range(len(self.tgt_data)), key=lambda x: len(target_tokenizer.tokenize(self.tgt_data[x])))
+        self.src_data = [self.src_data[i] for i in order]
+        self.tgt_data = [self.tgt_data[i] for i in order]
 
     def __len__(self) -> int:
         return len(self.src_data)
@@ -368,24 +373,26 @@ if __name__ == "__main__":
         MTDataset(
             "/Users/chenghaomou/Downloads/flores_test_sets/wikipedia.dev.ne-en.ne",
             "/Users/chenghaomou/Downloads/flores_test_sets/wikipedia.dev.ne-en.en",
+            tgt_tokenizer
         ),
-        batch_size=4,
+        batch_size=128,
         collate_fn=collate_fn_partial,
-        num_workers=24,
+        num_workers=4,
     )
     dev_dataloader = DataLoader(
         MTDataset(
             "/Users/chenghaomou/Downloads/flores_test_sets/wikipedia.test.ne-en.ne",
             "/Users/chenghaomou/Downloads/flores_test_sets/wikipedia.test.ne-en.en",
+            tgt_tokenizer
         ),
-        batch_size=4,
+        batch_size=24,
         collate_fn=collate_fn_partial,
-        num_workers=24,
+        num_workers=4,
     )
 
     trainer = pl.Trainer(
         deterministic=True,
-        val_check_interval=0.2,
+        val_check_interval=1.0,
         gradient_clip_val=1.0,
     )
     model = MinimalTranslator(
@@ -397,5 +404,6 @@ if __name__ == "__main__":
         source_vocab_length=getattr(src_tokenizer, "vocab_size", 10),
         src_tokenizer=src_tokenizer,
         tgt_tokenizer=tgt_tokenizer,
+        lr=0.1
     )
     trainer.fit(model, train_dataloader, dev_dataloader)

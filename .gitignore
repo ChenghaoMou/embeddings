@@ -1,5 +1,5 @@
 # VSCode
-.vscode/*
+.vscode/settings.json
 *logs
 .coverage
 
