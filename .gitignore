@@ -2,6 +2,9 @@
 .vscode/settings.json
 *logs
 .coverage
+.data
+Noto_Sans
+flores_test_sets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
