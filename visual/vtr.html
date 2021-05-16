@@ -64,7 +64,7 @@ def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
         Encoded image
     &#34;&#34;&#34;
 
-    image_font = ImageFont.truetype(font, font_size)
+    image_font = ImageFont.truetype(font, max(font_size - 2, 8))
     text = text.replace(&#34;\n&#34;, &#34; &#34;)
 
     line_width, _ = image_font.getsize(text)
@@ -74,7 +74,6 @@ def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
     draw.text(xy=(0, 0), text=text, fill=&#34;#FFFFFF&#34;, font=image_font)
 
     return img
-
 
 class VTRTokenizer(EmbeddingTokenizer):
     &#34;&#34;&#34;
@@ -214,7 +213,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         Encoded image
     &#34;&#34;&#34;
 
-    image_font = ImageFont.truetype(font, font_size)
+    image_font = ImageFont.truetype(font, max(font_size - 2, 8))
     text = text.replace(&#34;\n&#34;, &#34; &#34;)
 
     line_width, _ = image_font.getsize(text)
