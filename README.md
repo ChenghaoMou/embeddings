@@ -7,6 +7,10 @@
 -   [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
 -   [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
 
+## Examples
+
+- [x] [Machine Translation](examples/translation/nmt_transformer.py)
+
 ## TODO
 
 -   [ ] **If you find an interesting embedding method, please consider creating an issue or a PR!**
@@ -22,7 +26,7 @@ pip install text-embeddings --upgrade
 
 [Link](https://chenghaomou.github.io/embeddings/)
 
-## Usage
+## Example Usage
 
 ```python
 from text_embeddings.visual import VTRTokenizer

@@ -35,7 +35,7 @@ def text2image(text: str, font: str, font_size: int = 14) -> Image:
         Encoded image
     """
 
-    image_font = ImageFont.truetype(font, font_size)
+    image_font = ImageFont.truetype(font, max(font_size - 2, 8))
     text = text.replace("\n", " ")
 
     line_width, _ = image_font.getsize(text)
@@ -45,7 +45,6 @@ def text2image(text: str, font: str, font_size: int = 14) -> Image:
     draw.text(xy=(0, 0), text=text, fill="#FFFFFF", font=image_font)
 
     return img
-
 
 class VTRTokenizer(EmbeddingTokenizer):
     """

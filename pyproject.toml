@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "text-embeddings"
-version = "0.0.4"
+version = "0.0.5"
 description = "Non-traditional/no-vocabulary text embeddings in one place."
 authors = ["Chenghao Mou <mouchenghao@gmail.com>"]
 license = "MIT"

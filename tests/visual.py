@@ -21,6 +21,23 @@ def test_text2image(text: str):
         img.save(tmp.name)
 
 @pytest.mark.parametrize(
+    ('text',), [
+        ("Hello world!", ),
+        ("Hóla!",)
+    ]
+)
+def test_text2embeddings(text: str):
+
+    embedder = VTRTokenizer(
+        font_size=14,
+        window_size=10,
+        font="~/Library/Fonts/NotoSansDisplay-Regular.ttf",
+        max_length=36
+    )
+
+    print(embedder.text2embeddings(text))
+
+@pytest.mark.parametrize(
     ('text_pair', 'add_special_tokens', 'stride', 'padding', 'truncation', 'return_attention_mask', 'return_special_tokens_mask', 'return_length'), [
         (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, True),
         (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, False),
