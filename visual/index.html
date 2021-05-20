@@ -34,7 +34,9 @@
 
 &#34;&#34;&#34;Visual information based tokenizers.&#34;&#34;&#34;
 
-from .vtr import VTRTokenizer, text2image</code></pre>
+from .vtr import VTRTokenizer, text2image
+
+__all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
 </details>
 </section>
 <section>
@@ -49,8 +51,318 @@ from .vtr import VTRTokenizer, text2image</code></pre>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="text_embeddings.visual.text2image"><code class="name flex">
+<span>def <span class="ident">text2image</span></span>(<span>text: str, font: str, font_size: int = 14) ‑> <module 'PIL.Image' from '/opt/hostedtoolcache/Python/3.8.10/x64/lib/python3.8/site-packages/PIL/Image.py'></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert text into an image and return the image. Reference: <a href="https://gist.github.com/destan/5540702">https://gist.github.com/destan/5540702</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
+<dd>Text to encode</dd>
+<dt><strong><code>font</code></strong> :&ensp;<code>str</code></dt>
+<dd>Name of the font to use</dd>
+<dt><strong><code>font_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>Size of the font, by default 14</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Image</code></dt>
+<dd>Encoded image</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def text2image(text: str, font: str, font_size: int = 14) -&gt; Image:
+    &#34;&#34;&#34;Convert text into an image and return the image. Reference: https://gist.github.com/destan/5540702
+
+    Parameters
+    ----------
+    text : str
+        Text to encode
+    font : str
+        Name of the font to use
+    font_size : int, optional
+        Size of the font, by default 14
+
+    Returns
+    -------
+    Image
+        Encoded image
+    &#34;&#34;&#34;
+
+    image_font = ImageFont.truetype(font, max(font_size - 2, 8))
+    text = text.replace(&#34;\n&#34;, &#34; &#34;)
+
+    line_width, _ = image_font.getsize(text)
+
+    img = Image.new(&#34;L&#34;, (line_width, font_size))
+    draw = ImageDraw.Draw(img)
+    draw.text(xy=(0, 0), text=text, fill=&#34;#FFFFFF&#34;, font=image_font)
+
+    return img</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="text_embeddings.visual.VTRTokenizer"><code class="flex name class">
+<span>class <span class="ident">VTRTokenizer</span></span>
+<span>(</span><span>window_size: int = 10, stride: int = 10, font: str = '~/Library/Fonts/NotoSansDisplay-Regular.ttf', font_size: int = 14, model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Render the text into a series of image blocks. Reference <a href="https://t.co/l9E6rL8O5p?amp=1">VTR</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>window_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The width of the image window, by default 10</dd>
+<dt><strong><code>stride</code></strong> :&ensp;<code>int optional</code></dt>
+<dd>The stride used to generate image windows, by default 10</dd>
+<dt><strong><code>font</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>Path to the font file, by default "~/Library/Fonts/NotoSansDisplay-Regular.ttf"</dd>
+<dt><strong><code>font_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The size of the font in pixels, might be smaller than the actual image height, by default 14</dd>
+<dt><strong><code>model_input_names</code></strong> :&ensp;<code>List[str]</code>, optional</dt>
+<dd>Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]</dd>
+<dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
+<dd>Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}</dd>
+<dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
+<dd>Maximum sequence length, by default 25</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
+&gt;&gt;&gt; from transformers.tokenization_utils_base import *
+&gt;&gt;&gt; tokenier = VTRTokenizer()
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 15, 14, 10), results['input_ids'].shape
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class VTRTokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;
+    Render the text into a series of image blocks. Reference [VTR](https://t.co/l9E6rL8O5p?amp=1)
+
+    Parameters
+    ----------
+    window_size : int, optional
+        The width of the image window, by default 10
+    stride: int optional
+        The stride used to generate image windows, by default 10
+    font : str, optional
+        Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+    font_size : int, optional
+        The size of the font in pixels, might be smaller than the actual image height, by default 14
+    model_input_names : List[str], optional
+        Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
+    max_length : Optional[int], optional
+        Maximum sequence length, by default 25
+
+    Examples
+    --------
+    &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
+    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+    &gt;&gt;&gt; tokenier = VTRTokenizer()
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 15, 14, 10), results[&#39;input_ids&#39;].shape
+    &#34;&#34;&#34;
+
+    def __init__(
+        self,
+        window_size: int = 10,
+        stride: int = 10,
+        font: str = &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;,
+        font_size: int = 14,
+        model_input_names: List[str] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 25,
+    ):
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.font_size = font_size
+        self.window_size = window_size
+        self.stride = stride
+        self.font = font
+
+        if self.model_input_names is None:
+            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
+            self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+
+    def text2embeddings(self, text: str) -&gt; np.ndarray:
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.
+
+        Parameters
+        ----------
+        text : str
+            Input text
+
+        Returns
+        -------
+        np.ndarray
+            An array in (sequence_length, height, width) shape
+        &#34;&#34;&#34;
+        if not text:
+            return None
+
+        image = text2image(text, font=self.font, font_size=self.font_size)
+        image_array = np.asarray(image)
+
+        return np.squeeze(
+            sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
+            axis=0,
+        )[:: self.stride]
+
+    def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+        &#34;&#34;&#34;Create a padding token embedding for an empty window.
+
+        Parameters
+        ----------
+        input_embeddings : [type], optional
+            Embeddings already encoded, by default None
+
+        Returns
+        -------
+        np.ndarray
+            An empty array in (font_size, window_size) shape
+        &#34;&#34;&#34;
+        return np.zeros((len(input_embeddings[0]), self.window_size))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
+<li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
+<li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="text_embeddings.visual.VTRTokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="text_embeddings.visual.VTRTokenizer.create_padding_token_embedding"><code class="name flex">
+<span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a padding token embedding for an empty window.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>[type]</code>, optional</dt>
+<dd>Embeddings already encoded, by default None</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An empty array in (font_size, window_size) shape</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+    &#34;&#34;&#34;Create a padding token embedding for an empty window.
+
+    Parameters
+    ----------
+    input_embeddings : [type], optional
+        Embeddings already encoded, by default None
+
+    Returns
+    -------
+    np.ndarray
+        An empty array in (font_size, window_size) shape
+    &#34;&#34;&#34;
+    return np.zeros((len(input_embeddings[0]), self.window_size))</code></pre>
+</details>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.text2embeddings"><code class="name flex">
+<span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
+<dd>Input text</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An array in (sequence_length, height, width) shape</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, font_size, window_size) shape.
+
+    Parameters
+    ----------
+    text : str
+        Input text
+
+    Returns
+    -------
+    np.ndarray
+        An array in (sequence_length, height, width) shape
+    &#34;&#34;&#34;
+    if not text:
+        return None
+
+    image = text2image(text, font=self.font, font_size=self.font_size)
+    image_array = np.asarray(image)
+
+    return np.squeeze(
+        sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
+        axis=0,
+    )[:: self.stride]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></b></code>:
+<ul class="hlist">
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.pad" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.pad">pad</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.prepare_for_model" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.prepare_for_model">prepare_for_model</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -67,6 +379,28 @@ from .vtr import VTRTokenizer, text2image</code></pre>
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="text_embeddings.visual.vtr" href="vtr.html">text_embeddings.visual.vtr</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="text_embeddings.visual.text2image" href="#text_embeddings.visual.text2image">text2image</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="text_embeddings.visual.VTRTokenizer" href="#text_embeddings.visual.VTRTokenizer">VTRTokenizer</a></code></h4>
+<ul class="">
+<li><code><a title="text_embeddings.visual.VTRTokenizer.create_padding_token_embedding" href="#text_embeddings.visual.VTRTokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.max_model_input_sizes" href="#text_embeddings.visual.VTRTokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.model_input_names" href="#text_embeddings.visual.VTRTokenizer.model_input_names">model_input_names</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.padding_side" href="#text_embeddings.visual.VTRTokenizer.padding_side">padding_side</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.pretrained_init_configuration" href="#text_embeddings.visual.VTRTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map" href="#text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.text2embeddings" href="#text_embeddings.visual.VTRTokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.vocab_files_names" href="#text_embeddings.visual.VTRTokenizer.vocab_files_names">vocab_files_names</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

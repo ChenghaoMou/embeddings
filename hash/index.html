@@ -35,7 +35,9 @@
 &#34;&#34;&#34;Hash related tokenizers.&#34;&#34;&#34;
 
 from .canine import CANINETokenizer
-from .pqrnn import PQRNNTokenizer</code></pre>
+from .pqrnn import PQRNNTokenizer
+
+__all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 </details>
 </section>
 <section>
@@ -43,7 +45,7 @@ from .pqrnn import PQRNNTokenizer</code></pre>
 <dl>
 <dt><code class="name"><a title="text_embeddings.hash.canine" href="canine.html">text_embeddings.hash.canine</a></code></dt>
 <dd>
-<div class="desc"><p>CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation</p></div>
+<div class="desc"><p>From CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation.</p></div>
 </dd>
 <dt><code class="name"><a title="text_embeddings.hash.pqrnn" href="pqrnn.html">text_embeddings.hash.pqrnn</a></code></dt>
 <dd>
@@ -60,6 +62,477 @@ from .pqrnn import PQRNNTokenizer</code></pre>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="text_embeddings.hash.CANINETokenizer"><code class="flex name class">
+<span>class <span class="ident">CANINETokenizer</span></span>
+<span>(</span><span>hash_size: int = 768, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 2048)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A character hashing tokenizer/embedder from <a href="https://arxiv.org/abs/2103.06874">CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>hash_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The embedding size of each character, by default 768</dd>
+<dt><strong><code>model_input_names</code></strong> :&ensp;<code>Optional[List[str]]</code>, optional</dt>
+<dd>Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]</dd>
+<dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
+<dd>Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}</dd>
+<dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
+<dd>Maximum character length, by default 2048</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
+&gt;&gt;&gt; from transformers.tokenization_utils_base import *
+&gt;&gt;&gt; tokenier = CANINETokenizer()
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CANINETokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;
+    A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
+
+    Parameters
+    ----------
+    hash_size : int, optional
+        The embedding size of each character, by default 768
+    model_input_names : Optional[List[str]], optional
+        Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
+    max_length : Optional[int], optional
+        Maximum character length, by default 2048
+
+    Examples
+    --------
+    &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
+    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+    &gt;&gt;&gt; tokenier = CANINETokenizer()
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
+    &#34;&#34;&#34;
+
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+
+        if self.model_input_names is None:
+            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
+            self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+
+    def text2embeddings(self, text: str) -&gt; np.ndarray:
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+
+        Parameters
+        ----------
+        text : str
+            Input text
+
+        Returns
+        -------
+        np.ndarray
+            An array in (sequence_length, 1, hash_size) shape
+        &#34;&#34;&#34;
+        if not text:
+            return None
+        
+        result = np.zeros((len(text), self.hash_size))
+        for i, char in enumerate(text):
+            result[i] = murmurhash(char, feature_size=self.hash_size*2)
+    
+        return result
+    
+    def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+        &#34;&#34;&#34;Create a padding token embedding.
+
+        Parameters
+        ----------
+        input_embeddings : [type], optional
+            Embeddings already encoded, by default None
+
+        Returns
+        -------
+        np.ndarray
+            An embedding array in (hash_size)
+        &#34;&#34;&#34;
+        return np.zeros((self.hash_size, ))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
+<li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
+<li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="text_embeddings.hash.CANINETokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="text_embeddings.hash.CANINETokenizer.create_padding_token_embedding"><code class="name flex">
+<span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a padding token embedding.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>[type]</code>, optional</dt>
+<dd>Embeddings already encoded, by default None</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An embedding array in (hash_size)</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+    &#34;&#34;&#34;Create a padding token embedding.
+
+    Parameters
+    ----------
+    input_embeddings : [type], optional
+        Embeddings already encoded, by default None
+
+    Returns
+    -------
+    np.ndarray
+        An embedding array in (hash_size)
+    &#34;&#34;&#34;
+    return np.zeros((self.hash_size, ))</code></pre>
+</details>
+</dd>
+<dt id="text_embeddings.hash.CANINETokenizer.text2embeddings"><code class="name flex">
+<span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
+<dd>Input text</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An array in (sequence_length, 1, hash_size) shape</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+
+    Parameters
+    ----------
+    text : str
+        Input text
+
+    Returns
+    -------
+    np.ndarray
+        An array in (sequence_length, 1, hash_size) shape
+    &#34;&#34;&#34;
+    if not text:
+        return None
+    
+    result = np.zeros((len(text), self.hash_size))
+    for i, char in enumerate(text):
+        result[i] = murmurhash(char, feature_size=self.hash_size*2)
+
+    return result</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></b></code>:
+<ul class="hlist">
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.pad" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.pad">pad</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.prepare_for_model" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.prepare_for_model">prepare_for_model</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer"><code class="flex name class">
+<span>class <span class="ident">PQRNNTokenizer</span></span>
+<span>(</span><span>hash_size: int = 768, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 2048)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Boundary-based hashing embeddings based on <a href="https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html">PQRNN</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>hash_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The size of the hashing embedding, by default 768</dd>
+<dt><strong><code>model_input_names</code></strong> :&ensp;<code>Optional[List[str]]</code>, optional</dt>
+<dd>Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]</dd>
+<dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
+<dd>Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}</dd>
+<dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
+<dd>Maximum token length, by default 2048</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import PQRNNTokenizer
+&gt;&gt;&gt; from transformers.tokenization_utils_base import *
+&gt;&gt;&gt; tokenier = PQRNNTokenizer()
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 4, 768)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PQRNNTokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;
+    Boundary-based hashing embeddings based on [PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html)
+
+    Parameters
+    ----------
+    hash_size : int, optional
+        The size of the hashing embedding, by default 768
+    model_input_names : Optional[List[str]], optional
+        Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
+    max_length : Optional[int], optional
+        Maximum token length, by default 2048
+    
+    Examples
+    --------
+    &gt;&gt;&gt; from text_embeddings.hash import PQRNNTokenizer
+    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
+    &gt;&gt;&gt; tokenier = PQRNNTokenizer()
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768)
+    &#34;&#34;&#34;
+
+    def __init__(
+        self,
+        hash_size: int = 768,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 2048,
+    ):
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.hash_size = hash_size
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+        
+        if self.model_input_names is None:
+            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
+            self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
+
+    def text2embeddings(self, text: str) -&gt; np.ndarray:
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+
+        Parameters
+        ----------
+        text : str
+            Input text
+
+        Returns
+        -------
+        np.ndarray
+            An array in (sequence_length, 1, hash_size) shape
+        &#34;&#34;&#34;
+        if not text:
+            return None
+        
+        tokens = text.split(&#34; &#34;)
+        result = np.zeros((len(tokens), self.hash_size))
+        for i, token in enumerate(tokens):
+            result[i] = murmurhash(token, feature_size=self.hash_size*2)
+        
+        return result
+
+    def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+        &#34;&#34;&#34;Create a padding token embedding
+
+        Parameters
+        ----------
+        input_embeddings : [type], optional
+            [description], by default None
+
+        Returns
+        -------
+        np.ndarray
+            An empty embedding in (hash_size, ) shape
+        &#34;&#34;&#34;
+        
+        return np.zeros((self.hash_size, ))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
+<li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
+<li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="text_embeddings.hash.PQRNNTokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="text_embeddings.hash.PQRNNTokenizer.create_padding_token_embedding"><code class="name flex">
+<span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a padding token embedding</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>[type]</code>, optional</dt>
+<dd>[description], by default None</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An empty embedding in (hash_size, ) shape</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
+    &#34;&#34;&#34;Create a padding token embedding
+
+    Parameters
+    ----------
+    input_embeddings : [type], optional
+        [description], by default None
+
+    Returns
+    -------
+    np.ndarray
+        An empty embedding in (hash_size, ) shape
+    &#34;&#34;&#34;
+    
+    return np.zeros((self.hash_size, ))</code></pre>
+</details>
+</dd>
+<dt id="text_embeddings.hash.PQRNNTokenizer.text2embeddings"><code class="name flex">
+<span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
+<dd>Input text</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>An array in (sequence_length, 1, hash_size) shape</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+
+    Parameters
+    ----------
+    text : str
+        Input text
+
+    Returns
+    -------
+    np.ndarray
+        An array in (sequence_length, 1, hash_size) shape
+    &#34;&#34;&#34;
+    if not text:
+        return None
+    
+    tokens = text.split(&#34; &#34;)
+    result = np.zeros((len(tokens), self.hash_size))
+    for i, token in enumerate(tokens):
+        result[i] = murmurhash(token, feature_size=self.hash_size*2)
+    
+    return result</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></b></code>:
+<ul class="hlist">
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.build_inputs_with_special_tokens">build_inputs_with_special_tokens</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.create_token_type_ids_from_sequences">create_token_type_ids_from_sequences</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.get_special_tokens_mask">get_special_tokens_mask</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.pad" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.pad">pad</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.prepare_for_model" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer.prepare_for_model">prepare_for_model</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -78,6 +551,36 @@ from .pqrnn import PQRNNTokenizer</code></pre>
 <li><code><a title="text_embeddings.hash.canine" href="canine.html">text_embeddings.hash.canine</a></code></li>
 <li><code><a title="text_embeddings.hash.pqrnn" href="pqrnn.html">text_embeddings.hash.pqrnn</a></code></li>
 <li><code><a title="text_embeddings.hash.util" href="util.html">text_embeddings.hash.util</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="text_embeddings.hash.CANINETokenizer" href="#text_embeddings.hash.CANINETokenizer">CANINETokenizer</a></code></h4>
+<ul class="">
+<li><code><a title="text_embeddings.hash.CANINETokenizer.create_padding_token_embedding" href="#text_embeddings.hash.CANINETokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.max_model_input_sizes" href="#text_embeddings.hash.CANINETokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.model_input_names" href="#text_embeddings.hash.CANINETokenizer.model_input_names">model_input_names</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.padding_side" href="#text_embeddings.hash.CANINETokenizer.padding_side">padding_side</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.pretrained_init_configuration" href="#text_embeddings.hash.CANINETokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.pretrained_vocab_files_map" href="#text_embeddings.hash.CANINETokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.text2embeddings" href="#text_embeddings.hash.CANINETokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.hash.CANINETokenizer.vocab_files_names" href="#text_embeddings.hash.CANINETokenizer.vocab_files_names">vocab_files_names</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="text_embeddings.hash.PQRNNTokenizer" href="#text_embeddings.hash.PQRNNTokenizer">PQRNNTokenizer</a></code></h4>
+<ul class="">
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.create_padding_token_embedding" href="#text_embeddings.hash.PQRNNTokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.max_model_input_sizes" href="#text_embeddings.hash.PQRNNTokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.model_input_names" href="#text_embeddings.hash.PQRNNTokenizer.model_input_names">model_input_names</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.padding_side" href="#text_embeddings.hash.PQRNNTokenizer.padding_side">padding_side</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.pretrained_init_configuration" href="#text_embeddings.hash.PQRNNTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.pretrained_vocab_files_map" href="#text_embeddings.hash.PQRNNTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.text2embeddings" href="#text_embeddings.hash.PQRNNTokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.hash.PQRNNTokenizer.vocab_files_names" href="#text_embeddings.hash.PQRNNTokenizer.vocab_files_names">vocab_files_names</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
