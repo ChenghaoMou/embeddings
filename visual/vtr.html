@@ -102,7 +102,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 15, 14, 10), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 13, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
 
     def __init__(
@@ -258,7 +258,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = VTRTokenizer()
 &gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-&gt;&gt;&gt; assert results['input_ids'].shape == (2, 15, 14, 10), results['input_ids'].shape
+&gt;&gt;&gt; assert results['input_ids'].shape == (2, 13, 14, 10), results['input_ids'].shape
 </code></pre></div>
 <details class="source">
 <summary>
@@ -291,7 +291,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
     &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 15, 14, 10), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 13, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
 
     def __init__(
