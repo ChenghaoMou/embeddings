@@ -73,7 +73,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     >>> from transformers.tokenization_utils_base import *
     >>> tokenier = VTRTokenizer()
     >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    >>> assert results['input_ids'].shape == (2, 15, 14, 10), results['input_ids'].shape
+    >>> assert results['input_ids'].shape == (2, 13, 14, 10), results['input_ids'].shape
     """
 
     def __init__(
