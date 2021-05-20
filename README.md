@@ -1,5 +1,5 @@
 ![banner](./banner.png)
-[![PyPI version](https://badge.fury.io/py/text-embeddings.svg)](https://badge.fury.io/py/text-embeddings) ![Coverage](./coverage.svg)
+[![PyPI version](https://badge.fury.io/py/text-embeddings.svg)](https://badge.fury.io/py/text-embeddings) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/112e50abd97444a4aca06f94fb7e8873)](https://www.codacy.com/gh/ChenghaoMou/embeddings/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ChenghaoMou/embeddings&amp;utm_campaign=Badge_Grade)
 
 ## Features
 
@@ -9,12 +9,7 @@
 
 ## Examples
 
-- [x] [Machine Translation](examples/translation/nmt_transformer.py)
-
-## TODO
-
--   [ ] **If you find an interesting embedding method, please consider creating an issue or a PR!**
--   [ ] Better documentation, abstraction and extensibility
+-   [x] [Machine Translation](examples/translation/nmt_transformer.py)
 
 ## Installation
 

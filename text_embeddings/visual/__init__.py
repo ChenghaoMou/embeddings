@@ -6,3 +6,5 @@
 """Visual information based tokenizers."""
 
 from .vtr import VTRTokenizer, text2image
+
+__all__ = ['VTRTokenizer', 'text2image']

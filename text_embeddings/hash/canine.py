@@ -3,7 +3,7 @@
 # @Date    : 2021-04-18 09:06:29
 # @Author  : Chenghao Mou (mouchenghao@gmail.com)
 
-"""CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation"""
+"""From CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation."""
 
 import numpy as np
 from typing import Optional, List, Dict
@@ -12,7 +12,6 @@ from text_embeddings.base import EmbeddingTokenizer
 from loguru import logger
 
 class CANINETokenizer(EmbeddingTokenizer):
-
     """
     A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
 
@@ -36,7 +35,6 @@ class CANINETokenizer(EmbeddingTokenizer):
     >>> assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
     """
 
-    
     def __init__(
         self,
         hash_size: int = 768,

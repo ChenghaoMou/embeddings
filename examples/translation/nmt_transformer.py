@@ -18,15 +18,19 @@ from tqdm import tqdm
 from transformers import get_cosine_schedule_with_warmup
 
 
-def gen_nopeek_mask(length):
-    """
-    Returns the nopeek mask
-            Parameters:
-                    length (int): Number of tokens in each sentence in the target batch
-            Returns:
-                    mask (arr): tgt_mask, looks like [[0., -inf, -inf],
-                                                     [0., 0., -inf],
-                                                     [0., 0., 0.]]
+def gen_no_peek_mask(length: int) -> np.ndarray:
+    """Generate an N by N mask for autoregressive attention.
+
+    Parameters
+    ----------
+    length : int
+        Length of the sequence
+
+    Returns
+    -------
+    nd.ndarray
+        An N by N mask where allowed positions are marked 
+        as zeros while others are negative infinities
     """
     mask = rearrange(torch.triu(torch.ones(length, length)) == 1, "h w -> w h")
     mask = (
@@ -112,7 +116,7 @@ class Translator(pl.LightningModule):
         src, src_key_padding_mask, tgt, tgt_key_padding_mask, ratio = batch
         memory_key_padding_mask = src_key_padding_mask.clone()
         tgt_inp, tgt_out = tgt[:, :-1], tgt[:, 1:]
-        tgt_mask = gen_nopeek_mask(tgt_inp.shape[1]).to(self.device)
+        tgt_mask = gen_no_peek_mask(tgt_inp.shape[1]).to(self.device)
 
         outputs = self.forward(
             src,
@@ -133,7 +137,7 @@ class Translator(pl.LightningModule):
         src, src_key_padding_mask, tgt, tgt_key_padding_mask, _ = batch
         memory_key_padding_mask = src_key_padding_mask.clone()
         tgt_inp, tgt_out = tgt[:, :-1], tgt[:, 1:]
-        tgt_mask = gen_nopeek_mask(tgt_inp.shape[1]).to(self.device)
+        tgt_mask = gen_no_peek_mask(tgt_inp.shape[1]).to(self.device)
 
         outputs = self.forward(
             src,
@@ -189,7 +193,7 @@ class Translator(pl.LightningModule):
             tgt = rearrange(tgt, "n t -> t n")
             tgt = self.pos_enc(self.embed_tgt(tgt) * math.sqrt(self.d_model))
             output = self.transformer.decoder(
-                tgt, memory, tgt_mask=gen_nopeek_mask(tgt.shape[0]).to(self.device)
+                tgt, memory, tgt_mask=gen_no_peek_mask(tgt.shape[0]).to(self.device)
             )
             output = rearrange(output, "t n e -> n t e")
             logits = self.fc(output)

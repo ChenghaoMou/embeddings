@@ -6,7 +6,7 @@
 import pytest
 import tempfile
 from text_embeddings.visual import text2image, VTRTokenizer
-from transformers.tokenization_utils_base import *
+from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
 
 @pytest.mark.parametrize(
     ('text',), [

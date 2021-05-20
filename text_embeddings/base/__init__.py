@@ -3,7 +3,7 @@
 # @Date    : 2021-04-22 20:43:06
 # @Author  : Chenghao Mou (mouchenghao@gmail.com)
 
-"""This covers all the base classes, functions for other embedding based tokenizers."""
+"""base covers all the base classes, functions for other embedding based tokenizers."""
 
 import abc
 from typing import List, Optional, Union, Dict
@@ -13,7 +13,8 @@ import numpy as np
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase, PaddingStrategy, TruncationStrategy, TensorType, BatchEncoding, EncodedInput, is_torch_available, to_py_obj, TextInput
 
 def is_torch(x) -> bool: # pragma: no
-    """Helper function to check whether the input is a torch tensor.
+    """
+    Helper function to check whether the input is a torch tensor.
 
     Parameters
     ----------
@@ -74,7 +75,8 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
         return_length: bool = False,
         **kwargs,
     ) -> BatchEncoding:
-        """Tokenize the text into a sequence of image blocks.
+        """
+        Tokenize the text into a sequence of image blocks.
 
         Parameters
         ----------
@@ -120,7 +122,7 @@ class EmbeddingTokenizer(PreTrainedTokenizerBase):
             actual_max_length = self.max_length - len(self.special_tokens["SEP"]) * 2 - len(self.special_tokens["CLS"])
         else:
             actual_max_length = self.max_length
-        
+
         batch_outputs = {}
         text = text if isinstance(text, list) else [text]
         text_pair = text_pair if isinstance(text_pair, list) else [text_pair]

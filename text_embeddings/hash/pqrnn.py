@@ -35,7 +35,6 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     >>> assert results['input_ids'].shape == (2, 4, 768)
     """
 
-
     def __init__(
         self,
         hash_size: int = 768,

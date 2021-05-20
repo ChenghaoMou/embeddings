@@ -4,9 +4,8 @@
 # @Author  : Chenghao Mou (mouchenghao@gmail.com)
 
 import pytest
-import tempfile
 from text_embeddings.hash import CANINETokenizer, PQRNNTokenizer
-from transformers.tokenization_utils_base import *
+from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
 
 @pytest.mark.parametrize(
     ('text_pair', 'add_special_tokens', 'stride', 'padding', 'truncation', 'return_attention_mask', 'return_special_tokens_mask', 'return_length'), [
@@ -16,7 +15,6 @@ from transformers.tokenization_utils_base import *
         (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, False, True, True),
         (True, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
         (False, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        # (True, True, 5, PaddingStrategy.DO_NOT_PAD, TruncationStrategy.LONGEST_FIRST, True, True, True),
     ]
 )
 def test_canine_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, padding, truncation, return_attention_mask, return_special_tokens_mask, return_length):
@@ -37,10 +35,10 @@ def test_canine_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int
         text_pair=data if text_pair else None,
         add_special_tokens=add_special_tokens,
         stride=stride,
-        padding=padding, 
+        padding=padding,
         return_tensors='pt',
         truncation=truncation,
-        return_attention_mask=return_attention_mask, 
+        return_attention_mask=return_attention_mask,
         return_special_tokens_mask=return_special_tokens_mask,
         return_length=return_length,
         prepend_batch_axis=True,
@@ -65,7 +63,6 @@ def test_canine_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int
         (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, False, True, True),
         (True, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
         (False, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        # (True, True, 5, PaddingStrategy.DO_NOT_PAD, TruncationStrategy.LONGEST_FIRST, True, True, True),
     ]
 )
 def test_pqrnn_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, padding, truncation, return_attention_mask, return_special_tokens_mask, return_length):
@@ -86,10 +83,10 @@ def test_pqrnn_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int,
         text_pair=data if text_pair else None,
         add_special_tokens=add_special_tokens,
         stride=stride,
-        padding=padding, 
+        padding=padding,
         return_tensors='pt',
         truncation=truncation,
-        return_attention_mask=return_attention_mask, 
+        return_attention_mask=return_attention_mask,
         return_special_tokens_mask=return_special_tokens_mask,
         return_length=return_length,
         prepend_batch_axis=True,

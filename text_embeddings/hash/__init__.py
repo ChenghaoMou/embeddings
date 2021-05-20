@@ -7,3 +7,5 @@
 
 from .canine import CANINETokenizer
 from .pqrnn import PQRNNTokenizer
+
+__all__ = ['PQRNNTokenizer', 'CANINETokenizer']
