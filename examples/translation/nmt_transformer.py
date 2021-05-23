@@ -64,6 +64,7 @@ class Translator(pl.LightningModule):
         self.max_seq_length = max_seq_length
         self.embed_tgt = nn.Embedding(vocab_size, d_model)
         self.pos_enc = PositionalEncoding(d_model, pos_dropout, max_seq_length)
+        logger.debug(f"lr: {self.lr}, d_model: {d_model}, max_seq_length: {max_seq_length}")
 
         self.transformer = nn.Transformer(
             d_model,
@@ -155,8 +156,9 @@ class Translator(pl.LightningModule):
 
     def validation_epoch_end(self, outputs) -> None:
 
-        loss = torch.sum(torch.stack([o["val_loss"] for o in outputs]))
+        loss = torch.mean(torch.stack([o["val_loss"] for o in outputs]))
         self.log("val_loss", loss, prog_bar=True, on_epoch=True)
+        self.log("val_ppl", torch.exp(loss), prog_bar=True, on_epoch=True)
         logger.debug(
             self.decode("Strategie republikánské strany proti Obamovu znovuzvolení")
         )

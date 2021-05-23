@@ -1,0 +1,49 @@
+seed_everything: 42
+trainer:
+  logger: true
+  checkpoint_callback: true
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.EarlyStopping
+      init_args:
+        patience: 5
+        monitor: val_loss
+        stopping_threshold: 1.0e-4
+        divergence_threshold: 9.0
+        check_finite: true
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm
+  process_position: 0
+  num_nodes: 1
+  num_processes: 1
+  gpus: 1
+  progress_bar_refresh_rate: 50
+  check_val_every_n_epoch: 1
+  fast_dev_run: false
+  accumulate_grad_batches: 1
+  max_epochs: 5
+  min_epochs: 1
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  limit_test_batches: 1.0
+  limit_predict_batches: 1.0
+  val_check_interval: 1.0
+  flush_logs_every_n_steps: 100
+  log_every_n_steps: 50
+  precision: 16
+  weights_summary: top
+  deterministic: true
+  terminate_on_nan: true
+  amp_backend: native
+  amp_level: O2
+model:
+  hidden: 128
+  learning_rate: 1.0e-3
+  num_labels: 20
+data:
+  dataset_name: tweet_eval
+  font_path: "examples/classification/NotoSansDisplay-Regular.ttf"
+  font_size: 16
+  window_size: 8
+  stride: 5
+  batch_size: 64
+  subtask: emoji

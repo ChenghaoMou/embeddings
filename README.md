@@ -10,6 +10,7 @@
 ## Examples
 
 -   [x] [Machine Translation](examples/translation/nmt_transformer.py)
+-   [x] [Text Classification](examples/classification/rnn.py)
 
 ## Installation
 

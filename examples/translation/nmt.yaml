@@ -59,23 +59,23 @@ trainer:
   multiple_trainloader_mode: max_size_cycle
   stochastic_weight_avg: false
 model:
-  vocab_size: 10004
+  vocab_size: 30000
   d_model: 128
   nhead: 8
   num_encoder_layers: 6
   num_decoder_layers: 6
   dim_feedforward: 2048
-  max_seq_length: 128
-  pos_dropout: 0.1
-  trans_dropout: 0.1
+  max_seq_length: 512
+  pos_dropout: 0.3
+  trans_dropout: 0.3
   warmup_steps: 4000
   lr: 1.0e-3
 data:
-  font_path: examples/NotoSansDisplay-Regular.ttf
+  font_path: examples/translation/NotoSansDisplay-Regular.ttf
   font_size: 16
   window_size: 8
   stride: 4
   test_size: 0.2
-  max_seq_length: 128
-  vocab_size: 10000
+  max_seq_length: 512
+  vocab_size: 30000
   batch_size: 4096
