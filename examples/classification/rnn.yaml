@@ -37,7 +37,7 @@ trainer:
   amp_level: O2
 model:
   hidden: 128
-  learning_rate: 1.0e-3
+  learning_rate: 1.0e-4
   num_labels: 20
 data:
   dataset_name: tweet_eval
