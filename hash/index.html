@@ -130,11 +130,13 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
         self.max_length = max_length
 
         if self.model_input_names is None:
-            logger.warning(&#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;)
+            logger.warning(
+                &#39;Using default model_input_names values [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]&#39;
+            )
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
     def text2embeddings(self, text: str) -&gt; np.ndarray:
-        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, hash_size) shape.
 
         Parameters
         ----------
@@ -144,17 +146,17 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
         Returns
         -------
         np.ndarray
-            An array in (sequence_length, 1, hash_size) shape
+            An array in (sequence_length, hash_size) shape
         &#34;&#34;&#34;
         if not text:
             return None
-        
+
         result = np.zeros((len(text), self.hash_size))
         for i, char in enumerate(text):
-            result[i] = murmurhash(char, feature_size=self.hash_size*2)
-    
+            result[i] = murmurhash(char, feature_size=self.hash_size * 2)
+
         return result
-    
+
     def create_padding_token_embedding(self, input_embeddings=None) -&gt; np.ndarray:
         &#34;&#34;&#34;Create a padding token embedding.
 
@@ -168,7 +170,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
         np.ndarray
             An embedding array in (hash_size)
         &#34;&#34;&#34;
-        return np.zeros((self.hash_size, ))</code></pre>
+        return np.zeros((self.hash_size,))</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -237,14 +239,14 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
     np.ndarray
         An embedding array in (hash_size)
     &#34;&#34;&#34;
-    return np.zeros((self.hash_size, ))</code></pre>
+    return np.zeros((self.hash_size,))</code></pre>
 </details>
 </dd>
 <dt id="text_embeddings.hash.CANINETokenizer.text2embeddings"><code class="name flex">
 <span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.</p>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, hash_size) shape.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
@@ -253,14 +255,14 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>np.ndarray</code></dt>
-<dd>An array in (sequence_length, 1, hash_size) shape</dd>
+<dd>An array in (sequence_length, hash_size) shape</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
-    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, 1, hash_size) shape.
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, hash_size) shape.
 
     Parameters
     ----------
@@ -270,14 +272,14 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
     Returns
     -------
     np.ndarray
-        An array in (sequence_length, 1, hash_size) shape
+        An array in (sequence_length, hash_size) shape
     &#34;&#34;&#34;
     if not text:
         return None
-    
+
     result = np.zeros((len(text), self.hash_size))
     for i, char in enumerate(text):
-        result[i] = murmurhash(char, feature_size=self.hash_size*2)
+        result[i] = murmurhash(char, feature_size=self.hash_size * 2)
 
     return result</code></pre>
 </details>

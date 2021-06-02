@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>text_embeddings.hash.canine API documentation</title>
-<meta name="description" content="From CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation." />
+<title>text_embeddings.byte.byt5 API documentation</title>
+<meta name="description" content="From ByT5: Towards a token-free future with pre-trained byte-to-byte models." />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,61 +19,60 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>text_embeddings.hash.canine</code></h1>
+<h1 class="title">Module <code>text_embeddings.byte.byt5</code></h1>
 </header>
 <section id="section-intro">
-<p>From CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation.</p>
+<p>From ByT5: Towards a token-free future with pre-trained byte-to-byte models.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date    : 2021-04-18 09:06:29
-# @Author  : Chenghao Mou (mouchenghao@gmail.com)
+# @Date         : 2021-06-02 08:10:13
+# @Author       : Chenghao Mou (mouchenghao@gmail.com)
 
-&#34;&#34;&#34;From CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation.&#34;&#34;&#34;
+&#34;&#34;&#34;From ByT5: Towards a token-free future with pre-trained byte-to-byte models.&#34;&#34;&#34;
 
 import numpy as np
 from typing import Optional, List, Dict
-from text_embeddings.hash.util import murmurhash
 from text_embeddings.base import EmbeddingTokenizer
 from loguru import logger
 
 
-class CANINETokenizer(EmbeddingTokenizer):
-    &#34;&#34;&#34;
-    A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
+class BYT5Tokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.
 
     Parameters
     ----------
-    hash_size : int, optional
-        The embedding size of each character, by default 768
+    embed_size : int, optional
+        The size of the embedding, by default 259 (256 + 3 special tokens)
     model_input_names : Optional[List[str]], optional
         Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
     special_tokens : Optional[Dict[str, np.ndarray]], optional
         Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
     max_length : Optional[int], optional
-        Maximum character length, by default 2048
+        Maximum character length, by default 1024
 
     Examples
     --------
-    &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
-    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
-    &gt;&gt;&gt; tokenier = CANINETokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+    &gt;&gt;&gt; e = tokenizer.text2embeddings(&#34;This is a test message&#34;)
+    &gt;&gt;&gt; e.shape
+    (22, 259)
+    &gt;&gt;&gt; np.equal(np.max(e, axis=1), np.ones((len(e)))).all()
+    True
     &#34;&#34;&#34;
 
     def __init__(
         self,
-        hash_size: int = 768,
+        embed_size: int = 259,
         model_input_names: Optional[List[str]] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
-        max_length: Optional[int] = 2048,
+        max_length: Optional[int] = 1024,
     ):
         super().__init__(model_input_names, special_tokens, max_length)
-        self.hash_size = hash_size
+        self.embed_size = embed_size
         self.model_input_names = model_input_names
         self.special_tokens = special_tokens
         self.max_length = max_length
@@ -84,8 +83,19 @@ class CANINETokenizer(EmbeddingTokenizer):
             )
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
+        if self.special_tokens is None:
+            logger.warning(&#34;Using default special_tokens values&#34;)
+            self.special_tokens = {
+                &#34;SEP&#34;: np.zeros((self.embed_size,)),
+                &#34;CLS&#34;: np.zeros((self.embed_size,)),
+            }
+            self.special_tokens[&#34;CLS&#34;][1] = 1
+            self.special_tokens[&#34;SEP&#34;][2] = 1
+
+        logger.info(&#34;Be sure to add an embedding layer when using a BYT5Tokenizer.&#34;)
+
     def text2embeddings(self, text: str) -&gt; np.ndarray:
-        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, hash_size) shape.
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, embed_size) shape.
 
         Parameters
         ----------
@@ -95,14 +105,16 @@ class CANINETokenizer(EmbeddingTokenizer):
         Returns
         -------
         np.ndarray
-            An array in (sequence_length, hash_size) shape
+            An array in (sequence_length, embed_size) shape
         &#34;&#34;&#34;
         if not text:
             return None
 
-        result = np.zeros((len(text), self.hash_size))
-        for i, char in enumerate(text):
-            result[i] = murmurhash(char, feature_size=self.hash_size * 2)
+        b = text.encode(&#34;utf-8&#34;, errors=&#34;ignore&#34;)
+
+        result = np.zeros((len(b), self.embed_size))
+        for i, byte in enumerate(b):
+            result[i][byte + 3] = 1
 
         return result
 
@@ -111,15 +123,17 @@ class CANINETokenizer(EmbeddingTokenizer):
 
         Parameters
         ----------
-        input_embeddings : [type], optional
-            Embeddings already encoded, by default None
+        input_embeddings : np.ndarray, optional
+            Embedded input, by default None
 
         Returns
         -------
         np.ndarray
-            An embedding array in (hash_size)
+            A padding token embedding compatible with the input
         &#34;&#34;&#34;
-        return np.zeros((self.hash_size,))</code></pre>
+        e = np.zeros((self.embed_size,))
+        e[0] = 1
+        return e</code></pre>
 </details>
 </section>
 <section>
@@ -131,67 +145,68 @@ class CANINETokenizer(EmbeddingTokenizer):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="text_embeddings.hash.canine.CANINETokenizer"><code class="flex name class">
-<span>class <span class="ident">CANINETokenizer</span></span>
-<span>(</span><span>hash_size: int = 768, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 2048)</span>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer"><code class="flex name class">
+<span>class <span class="ident">BYT5Tokenizer</span></span>
+<span>(</span><span>embed_size: int = 259, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 1024)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>A character hashing tokenizer/embedder from <a href="https://arxiv.org/abs/2103.06874">CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation</a></p>
+<div class="desc"><p>Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>hash_size</code></strong> :&ensp;<code>int</code>, optional</dt>
-<dd>The embedding size of each character, by default 768</dd>
+<dt><strong><code>embed_size</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The size of the embedding, by default 259 (256 + 3 special tokens)</dd>
 <dt><strong><code>model_input_names</code></strong> :&ensp;<code>Optional[List[str]]</code>, optional</dt>
 <dd>Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]</dd>
 <dt><strong><code>special_tokens</code></strong> :&ensp;<code>Optional[Dict[str, np.ndarray]]</code>, optional</dt>
 <dd>Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}</dd>
 <dt><strong><code>max_length</code></strong> :&ensp;<code>Optional[int]</code>, optional</dt>
-<dd>Maximum character length, by default 2048</dd>
+<dd>Maximum character length, by default 1024</dd>
 </dl>
 <h2 id="examples">Examples</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
-&gt;&gt;&gt; from transformers.tokenization_utils_base import *
-&gt;&gt;&gt; tokenier = CANINETokenizer()
-&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-&gt;&gt;&gt; assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
+<pre><code class="language-python-repl">&gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+&gt;&gt;&gt; e = tokenizer.text2embeddings(&quot;This is a test message&quot;)
+&gt;&gt;&gt; e.shape
+(22, 259)
+&gt;&gt;&gt; np.equal(np.max(e, axis=1), np.ones((len(e)))).all()
+True
 </code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class CANINETokenizer(EmbeddingTokenizer):
-    &#34;&#34;&#34;
-    A character hashing tokenizer/embedder from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
+<pre><code class="python">class BYT5Tokenizer(EmbeddingTokenizer):
+    &#34;&#34;&#34;Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.
 
     Parameters
     ----------
-    hash_size : int, optional
-        The embedding size of each character, by default 768
+    embed_size : int, optional
+        The size of the embedding, by default 259 (256 + 3 special tokens)
     model_input_names : Optional[List[str]], optional
         Required inputs of the downstream model, by default it uses the same names as a BERT — [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
     special_tokens : Optional[Dict[str, np.ndarray]], optional
         Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {&#34;CLS&#34;: &#34;[CLS]&#34;, &#34;SEP&#34;: &#34;[SEP]&#34;}
     max_length : Optional[int], optional
-        Maximum character length, by default 2048
+        Maximum character length, by default 1024
 
     Examples
     --------
-    &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
-    &gt;&gt;&gt; from transformers.tokenization_utils_base import *
-    &gt;&gt;&gt; tokenier = CANINETokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
-    &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
+    &gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+    &gt;&gt;&gt; e = tokenizer.text2embeddings(&#34;This is a test message&#34;)
+    &gt;&gt;&gt; e.shape
+    (22, 259)
+    &gt;&gt;&gt; np.equal(np.max(e, axis=1), np.ones((len(e)))).all()
+    True
     &#34;&#34;&#34;
 
     def __init__(
         self,
-        hash_size: int = 768,
+        embed_size: int = 259,
         model_input_names: Optional[List[str]] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
-        max_length: Optional[int] = 2048,
+        max_length: Optional[int] = 1024,
     ):
         super().__init__(model_input_names, special_tokens, max_length)
-        self.hash_size = hash_size
+        self.embed_size = embed_size
         self.model_input_names = model_input_names
         self.special_tokens = special_tokens
         self.max_length = max_length
@@ -202,8 +217,19 @@ class CANINETokenizer(EmbeddingTokenizer):
             )
             self.model_input_names = [&#34;input_ids&#34;, &#34;token_type_ids&#34;, &#34;attention_mask&#34;]
 
+        if self.special_tokens is None:
+            logger.warning(&#34;Using default special_tokens values&#34;)
+            self.special_tokens = {
+                &#34;SEP&#34;: np.zeros((self.embed_size,)),
+                &#34;CLS&#34;: np.zeros((self.embed_size,)),
+            }
+            self.special_tokens[&#34;CLS&#34;][1] = 1
+            self.special_tokens[&#34;SEP&#34;][2] = 1
+
+        logger.info(&#34;Be sure to add an embedding layer when using a BYT5Tokenizer.&#34;)
+
     def text2embeddings(self, text: str) -&gt; np.ndarray:
-        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, hash_size) shape.
+        &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, embed_size) shape.
 
         Parameters
         ----------
@@ -213,14 +239,16 @@ class CANINETokenizer(EmbeddingTokenizer):
         Returns
         -------
         np.ndarray
-            An array in (sequence_length, hash_size) shape
+            An array in (sequence_length, embed_size) shape
         &#34;&#34;&#34;
         if not text:
             return None
 
-        result = np.zeros((len(text), self.hash_size))
-        for i, char in enumerate(text):
-            result[i] = murmurhash(char, feature_size=self.hash_size * 2)
+        b = text.encode(&#34;utf-8&#34;, errors=&#34;ignore&#34;)
+
+        result = np.zeros((len(b), self.embed_size))
+        for i, byte in enumerate(b):
+            result[i][byte + 3] = 1
 
         return result
 
@@ -229,15 +257,17 @@ class CANINETokenizer(EmbeddingTokenizer):
 
         Parameters
         ----------
-        input_embeddings : [type], optional
-            Embeddings already encoded, by default None
+        input_embeddings : np.ndarray, optional
+            Embedded input, by default None
 
         Returns
         -------
         np.ndarray
-            An embedding array in (hash_size)
+            A padding token embedding compatible with the input
         &#34;&#34;&#34;
-        return np.zeros((self.hash_size,))</code></pre>
+        e = np.zeros((self.embed_size,))
+        e[0] = 1
+        return e</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -247,47 +277,47 @@ class CANINETokenizer(EmbeddingTokenizer):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.create_padding_token_embedding"><code class="name flex">
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding"><code class="name flex">
 <span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a padding token embedding.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>[type]</code>, optional</dt>
-<dd>Embeddings already encoded, by default None</dd>
+<dt><strong><code>input_embeddings</code></strong> :&ensp;<code>np.ndarray</code>, optional</dt>
+<dd>Embedded input, by default None</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>np.ndarray</code></dt>
-<dd>An embedding array in (hash_size)</dd>
+<dd>A padding token embedding compatible with the input</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -298,22 +328,24 @@ class CANINETokenizer(EmbeddingTokenizer):
 
     Parameters
     ----------
-    input_embeddings : [type], optional
-        Embeddings already encoded, by default None
+    input_embeddings : np.ndarray, optional
+        Embedded input, by default None
 
     Returns
     -------
     np.ndarray
-        An embedding array in (hash_size)
+        A padding token embedding compatible with the input
     &#34;&#34;&#34;
-    return np.zeros((self.hash_size,))</code></pre>
+    e = np.zeros((self.embed_size,))
+    e[0] = 1
+    return e</code></pre>
 </details>
 </dd>
-<dt id="text_embeddings.hash.canine.CANINETokenizer.text2embeddings"><code class="name flex">
+<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings"><code class="name flex">
 <span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert text into an numpy array, in (sequence_length, hash_size) shape.</p>
+<div class="desc"><p>Convert text into an numpy array, in (sequence_length, embed_size) shape.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>text</code></strong> :&ensp;<code>str</code></dt>
@@ -322,14 +354,14 @@ class CANINETokenizer(EmbeddingTokenizer):
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>np.ndarray</code></dt>
-<dd>An array in (sequence_length, hash_size) shape</dd>
+<dd>An array in (sequence_length, embed_size) shape</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def text2embeddings(self, text: str) -&gt; np.ndarray:
-    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, hash_size) shape.
+    &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, embed_size) shape.
 
     Parameters
     ----------
@@ -339,14 +371,16 @@ class CANINETokenizer(EmbeddingTokenizer):
     Returns
     -------
     np.ndarray
-        An array in (sequence_length, hash_size) shape
+        An array in (sequence_length, embed_size) shape
     &#34;&#34;&#34;
     if not text:
         return None
 
-    result = np.zeros((len(text), self.hash_size))
-    for i, char in enumerate(text):
-        result[i] = murmurhash(char, feature_size=self.hash_size * 2)
+    b = text.encode(&#34;utf-8&#34;, errors=&#34;ignore&#34;)
+
+    result = np.zeros((len(b), self.embed_size))
+    for i, byte in enumerate(b):
+        result[i][byte + 3] = 1
 
     return result</code></pre>
 </details>
@@ -376,22 +410,22 @@ class CANINETokenizer(EmbeddingTokenizer):
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="text_embeddings.hash" href="index.html">text_embeddings.hash</a></code></li>
+<li><code><a title="text_embeddings.byte" href="index.html">text_embeddings.byte</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="text_embeddings.hash.canine.CANINETokenizer" href="#text_embeddings.hash.canine.CANINETokenizer">CANINETokenizer</a></code></h4>
+<h4><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer" href="#text_embeddings.byte.byt5.BYT5Tokenizer">BYT5Tokenizer</a></code></h4>
 <ul class="">
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.create_padding_token_embedding" href="#text_embeddings.hash.canine.CANINETokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes" href="#text_embeddings.hash.canine.CANINETokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.model_input_names" href="#text_embeddings.hash.canine.CANINETokenizer.model_input_names">model_input_names</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.padding_side" href="#text_embeddings.hash.canine.CANINETokenizer.padding_side">padding_side</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration" href="#text_embeddings.hash.canine.CANINETokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map" href="#text_embeddings.hash.canine.CANINETokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.text2embeddings" href="#text_embeddings.hash.canine.CANINETokenizer.text2embeddings">text2embeddings</a></code></li>
-<li><code><a title="text_embeddings.hash.canine.CANINETokenizer.vocab_files_names" href="#text_embeddings.hash.canine.CANINETokenizer.vocab_files_names">vocab_files_names</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding" href="#text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes" href="#text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names" href="#text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names">model_input_names</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.padding_side" href="#text_embeddings.byte.byt5.BYT5Tokenizer.padding_side">padding_side</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration" href="#text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map" href="#text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings" href="#text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names" href="#text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>
 </ul>
