@@ -1,11 +1,12 @@
 ![banner](./banner.png)
-[![PyPI version](https://badge.fury.io/py/text-embeddings.svg)](https://badge.fury.io/py/text-embeddings) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/112e50abd97444a4aca06f94fb7e8873)](https://www.codacy.com/gh/ChenghaoMou/embeddings/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ChenghaoMou/embeddings&amp;utm_campaign=Badge_Grade)
+[![PyPI version](https://badge.fury.io/py/text-embeddings.svg)](https://badge.fury.io/py/text-embeddings) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/112e50abd97444a4aca06f94fb7e8873)](https://www.codacy.com/gh/ChenghaoMou/embeddings/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ChenghaoMou/embeddings&utm_campaign=Badge_Grade)[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/112e50abd97444a4aca06f94fb7e8873)](https://www.codacy.com/gh/ChenghaoMou/embeddings/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ChenghaoMou/embeddings&utm_campaign=Badge_Coverage)
 
 ## Features
 
 -   [x] [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
 -   [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
 -   [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
+-   [x] Byte-level Embeddings ([ByT5](https://arxiv.org/pdf/2105.13626.pdf))
 
 ## Examples
 
