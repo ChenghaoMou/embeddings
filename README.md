@@ -3,10 +3,10 @@
 
 ## Features
 
--   [x] [Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
--   [x] Word-level Hash Embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
--   [x] Char-level Hash Embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
--   [x] Byte-level Embeddings ([ByT5](https://arxiv.org/pdf/2105.13626.pdf))
+-   [x] Visual text embeddings ([Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1))
+-   [x] Word-level hash embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
+-   [x] Char-level hash embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
+-   [x] Byte-level embeddings ([ByT5](https://arxiv.org/pdf/2105.13626.pdf))
 
 ## Examples
 
