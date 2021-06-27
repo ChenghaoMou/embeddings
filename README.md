@@ -7,6 +7,7 @@
 -   [x] Word-level hash embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
 -   [x] Char-level hash embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
 -   [x] Byte-level embeddings ([ByT5](https://arxiv.org/pdf/2105.13626.pdf))
+-   [x] Byte-level embedding module ([Charformer](https://arxiv.org/abs/2106.12672))
 
 ## Examples
 
