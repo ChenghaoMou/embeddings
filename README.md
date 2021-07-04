@@ -93,3 +93,43 @@ class MyOwnTokenizer(EmbeddingTokenizer):
         return np.zeros((10, 10, 10))
 
 ```
+
+## Example Usage for GBST
+
+```python
+import torch.onnx  # nightly torch only
+from text_embeddings.byte.charformer import GBST, ByteTokenizer
+from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
+
+model = GBST(
+    embed_size=128,
+    max_block_size=4,
+    downsampling_factor=2,
+    score_calibration=True,
+    vocab_size=259,
+)
+
+tokenizer = ByteTokenizer()
+results = tokenizer(
+    ["Life is like a box of chocolates.", "Coding is fun."],
+    add_special_tokens=True,
+    padding=PaddingStrategy.LONGEST,
+    truncation=TruncationStrategy.LONGEST_FIRST,
+)
+
+# Export the model
+torch.onnx.export(
+    model,
+    torch.tensor(results["input_ids"], requires_grad=True).long(),
+    "gbst.onnx",
+    export_params=True,
+    opset_version=11,
+    do_constant_folding=True,
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size", 1: "sequence_length"},},
+        "output": {0: "batch_size"},
+    },
+)
+```

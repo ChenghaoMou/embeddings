@@ -6,12 +6,114 @@
 
 """This is from paper Charformer: Fast Character Transformers via Gradient-based Subword Tokenization."""
 import math
+from typing import Dict, List, Optional
 
-
+import numpy as np
 import torch
-import pytorch_lightning as pl
 import torch.nn as nn
 from einops import rearrange, repeat
+from loguru import logger
+from transformers.file_utils import PaddingStrategy
+from text_embeddings.base import EmbeddingTokenizer
+
+
+class ByteTokenizer(EmbeddingTokenizer):
+    """Embed text into byte sequences. This is different from other tokenizers because it still needs a small vocabulary where each byte is mapped to an index.
+
+    Parameters
+    ----------
+    model_input_names : Optional[List[str]], optional
+        Required inputs of the downstream model, by default it uses the same names as a BERT — ["input_ids", "token_type_ids", "attention_mask"]
+    special_tokens : Optional[Dict[str, np.ndarray]], optional
+        Special tokens for the downstream model, by default it uses the same special tokens as a BERT — {"CLS": "[CLS]", "SEP": "[SEP]"}
+    max_length : Optional[int], optional
+        Maximum character length, by default 1024
+
+    Examples
+    --------
+    >>> from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
+    >>> tokenizer = ByteTokenizer()
+    >>> e = tokenizer.text2embeddings("This is a test message")
+    >>> e.shape
+    (22, 1)
+    >>> r = tokenizer(["This is a test message", "This is another test message"], padding=PaddingStrategy.LONGEST)
+    >>> r["input_ids"].shape
+    (2, 28)
+    """
+
+    def __init__(
+        self,
+        model_input_names: Optional[List[str]] = None,
+        special_tokens: Optional[Dict[str, np.ndarray]] = None,
+        max_length: Optional[int] = 1024,
+    ):
+        super().__init__(model_input_names, special_tokens, max_length)
+        self.embed_size = 1
+        self.model_input_names = model_input_names
+        self.special_tokens = special_tokens
+        self.max_length = max_length
+
+        if self.model_input_names is None:
+            logger.warning(
+                'Using default model_input_names values ["input_ids", "token_type_ids", "attention_mask"]'
+            )
+            self.model_input_names = ["input_ids", "token_type_ids", "attention_mask"]
+
+        if self.special_tokens is None:
+            logger.warning("Using default special_tokens values")
+            self.special_tokens = {
+                "SEP": np.zeros((self.embed_size,)),
+                "CLS": np.zeros((self.embed_size,)),
+            }
+            self.special_tokens["CLS"] = 1
+            self.special_tokens["SEP"] = 2
+
+        logger.info("Be sure to add an embedding layer when using a ByteTokenizer.")
+
+    def text2embeddings(self, text: str) -> np.ndarray:
+        """Convert text into an numpy array, in (sequence_length, embed_size) shape.
+
+        Parameters
+        ----------
+        text : str
+            Input text
+
+        Returns
+        -------
+        np.ndarray
+            An array in (sequence_length, embed_size) shape
+        """
+        if not text:
+            return None
+
+        b = text.encode("utf-8", errors="ignore")
+
+        result = np.zeros((len(b), self.embed_size))
+        for i, byte in enumerate(b):
+            result[i] = byte + len(self.special_tokens) + 1
+
+        return result
+
+    def create_padding_token_embedding(self, input_embeddings=None) -> np.ndarray:
+        """Create a padding token embedding.
+
+        Parameters
+        ----------
+        input_embeddings : np.ndarray, optional
+            Embedded input, by default None
+
+        Returns
+        -------
+        np.ndarray
+            A padding token embedding compatible with the input
+        """
+        e = np.zeros((self.embed_size,))
+        return e
+
+    def __call__(self, *args, **kwargs):
+        results = super().__call__(*args, **kwargs)
+        results["input_ids"] = np.squeeze(results["input_ids"], axis=-1)
+        return results
 
 
 class PositionalEncoding(nn.Module):
@@ -35,13 +137,13 @@ class PositionalEncoding(nn.Module):
         pe_ = repeat(
             self.pe,
             "s b h -> (repeat s) b h",
-            repeat=math.ceil(x.shape[0] / self.pe.shape[0]),
+            repeat=torch.div(x.shape[0], self.pe.shape[0], rounding_mode="trunc") + 1,
         )
         x = x + pe_[: x.shape[0], :]
         return rearrange(self.dropout(x), "l b h -> b h l")
 
 
-class GBST(pl.LightningModule):
+class GBST(nn.Module):
     """Gradient-based Subword Tokenization module from the paper:
     Charformer: Fast Character Transformers via Gradient-based Subword Tokenization.
 
@@ -67,10 +169,13 @@ class GBST(pl.LightningModule):
     ...     score_calibration=True,
     ...     vocab_size=256,
     ... )
-    >>> ids = torch.tensor([list("Life is like a box of chocolates.".encode("utf-8"))])
-    >>> assert ids.shape == torch.Size([1, 33]), ids.shape
-    >>> hidden = model(ids)
-    >>> assert hidden.shape == torch.Size([1, 17, 128]), hidden.shape
+    >>> tokenizer = ByteTokenizer()
+    >>> results = tokenizer(["Life is like a box of chocolates.", "Coding is fun."], add_special_tokens=True)
+    >>> results["input_ids"].shape
+    (2, 1024)
+    >>> hidden = model(torch.tensor(results["input_ids"]).long())
+    >>> hidden.shape
+    torch.Size([2, 512, 128])
     """
 
     def __init__(
@@ -163,3 +268,41 @@ class GBST(pl.LightningModule):
         Xs = rearrange(self.down_sampler(Xs), "b h s -> b s h")
 
         return Xs
+
+
+if __name__ == "__main__":
+
+    import torch.onnx  # nightly torch only
+    from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
+
+    model = GBST(
+        embed_size=128,
+        max_block_size=4,
+        downsampling_factor=2,
+        score_calibration=True,
+        vocab_size=259,
+    )
+
+    tokenizer = ByteTokenizer()
+    results = tokenizer(
+        ["Life is like a box of chocolates.", "Coding is fun."],
+        add_special_tokens=True,
+        padding=PaddingStrategy.LONGEST,
+        truncation=TruncationStrategy.LONGEST_FIRST,
+    )
+
+    # Export the model
+    torch.onnx.export(
+        model,
+        torch.tensor(results["input_ids"], requires_grad=True).long(),
+        "gbst.onnx",
+        export_params=True,
+        opset_version=11,
+        do_constant_folding=True,
+        input_names=["input"],
+        output_names=["output"],
+        dynamic_axes={
+            "input": {0: "batch_size", 1: "sequence_length"},
+            "output": {0: "batch_size"},
+        },
+    )
