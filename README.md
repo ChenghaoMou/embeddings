@@ -128,7 +128,7 @@ torch.onnx.export(
     input_names=["input"],
     output_names=["output"],
     dynamic_axes={
-        "input": {0: "batch_size", 1: "sequence_length"},},
+        "input": {0: "batch_size", 1: "sequence_length"},
         "output": {0: "batch_size"},
     },
 )
