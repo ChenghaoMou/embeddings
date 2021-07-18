@@ -57,7 +57,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     stride: int optional
         The stride used to generate image windows, by default 10
     font : str, optional
-        Path to the font file, by default "~/Library/Fonts/NotoSansDisplay-Regular.ttf"
+        Path to the font file, by default "resources/Noto_Sans/NotoSans-Regular.ttf"
     font_size : int, optional
         The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
@@ -72,7 +72,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     >>> from text_embeddings.visual import VTRTokenizer
     >>> from transformers.tokenization_utils_base import *
     >>> tokenier = VTRTokenizer()
-    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation="longest_first", add_special_tokens=False)
     >>> assert results['input_ids'].shape == (2, 13, 14, 10), results['input_ids'].shape
     """
 
@@ -80,7 +80,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         self,
         window_size: int = 10,
         stride: int = 10,
-        font: str = "~/Library/Fonts/NotoSansDisplay-Regular.ttf",
+        font: str = "resources/Noto_Sans/NotoSans-Regular.ttf",
         font_size: int = 14,
         model_input_names: List[str] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
