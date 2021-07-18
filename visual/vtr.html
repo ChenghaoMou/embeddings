@@ -86,7 +86,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     stride: int optional
         The stride used to generate image windows, by default 10
     font : str, optional
-        Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+        Path to the font file, by default &#34;resources/Noto_Sans/NotoSans-Regular.ttf&#34;
     font_size : int, optional
         The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
@@ -101,7 +101,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=&#34;longest_first&#34;, add_special_tokens=False)
     &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 13, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
 
@@ -109,7 +109,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         self,
         window_size: int = 10,
         stride: int = 10,
-        font: str = &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;,
+        font: str = &#34;resources/Noto_Sans/NotoSans-Regular.ttf&#34;,
         font_size: int = 14,
         model_input_names: List[str] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
@@ -173,7 +173,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="text_embeddings.visual.vtr.text2image"><code class="name flex">
-<span>def <span class="ident">text2image</span></span>(<span>text: str, font: str, font_size: int = 14) ‑> <module 'PIL.Image' from '/opt/hostedtoolcache/Python/3.8.10/x64/lib/python3.8/site-packages/PIL/Image.py'></span>
+<span>def <span class="ident">text2image</span></span>(<span>text: str, font: str, font_size: int = 14) ‑> <module 'PIL.Image' from '/opt/hostedtoolcache/Python/3.8.11/x64/lib/python3.8/site-packages/PIL/Image.py'></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert text into an image and return the image. Reference: <a href="https://gist.github.com/destan/5540702">https://gist.github.com/destan/5540702</a></p>
@@ -232,7 +232,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 <dl>
 <dt id="text_embeddings.visual.vtr.VTRTokenizer"><code class="flex name class">
 <span>class <span class="ident">VTRTokenizer</span></span>
-<span>(</span><span>window_size: int = 10, stride: int = 10, font: str = '~/Library/Fonts/NotoSansDisplay-Regular.ttf', font_size: int = 14, model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
+<span>(</span><span>window_size: int = 10, stride: int = 10, font: str = 'resources/Noto_Sans/NotoSans-Regular.ttf', font_size: int = 14, model_input_names: List[str] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 25)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Render the text into a series of image blocks. Reference <a href="https://t.co/l9E6rL8O5p?amp=1">VTR</a></p>
@@ -243,7 +243,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 <dt><strong><code>stride</code></strong> :&ensp;<code>int optional</code></dt>
 <dd>The stride used to generate image windows, by default 10</dd>
 <dt><strong><code>font</code></strong> :&ensp;<code>str</code>, optional</dt>
-<dd>Path to the font file, by default "~/Library/Fonts/NotoSansDisplay-Regular.ttf"</dd>
+<dd>Path to the font file, by default "resources/Noto_Sans/NotoSans-Regular.ttf"</dd>
 <dt><strong><code>font_size</code></strong> :&ensp;<code>int</code>, optional</dt>
 <dd>The size of the font in pixels, might be smaller than the actual image height, by default 14</dd>
 <dt><strong><code>model_input_names</code></strong> :&ensp;<code>List[str]</code>, optional</dt>
@@ -257,7 +257,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 <pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = VTRTokenizer()
-&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=&quot;longest_first&quot;, add_special_tokens=False)
 &gt;&gt;&gt; assert results['input_ids'].shape == (2, 13, 14, 10), results['input_ids'].shape
 </code></pre></div>
 <details class="source">
@@ -275,7 +275,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     stride: int optional
         The stride used to generate image windows, by default 10
     font : str, optional
-        Path to the font file, by default &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;
+        Path to the font file, by default &#34;resources/Noto_Sans/NotoSans-Regular.ttf&#34;
     font_size : int, optional
         The size of the font in pixels, might be smaller than the actual image height, by default 14
     model_input_names : List[str], optional
@@ -290,7 +290,7 @@ class VTRTokenizer(EmbeddingTokenizer):
     &gt;&gt;&gt; from text_embeddings.visual import VTRTokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = VTRTokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=&#34;longest_first&#34;, add_special_tokens=False)
     &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 13, 14, 10), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
 
@@ -298,7 +298,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         self,
         window_size: int = 10,
         stride: int = 10,
-        font: str = &#34;~/Library/Fonts/NotoSansDisplay-Regular.ttf&#34;,
+        font: str = &#34;resources/Noto_Sans/NotoSans-Regular.ttf&#34;,
         font_size: int = 14,
         model_input_names: List[str] = None,
         special_tokens: Optional[Dict[str, np.ndarray]] = None,
@@ -358,6 +358,7 @@ class VTRTokenizer(EmbeddingTokenizer):
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>

@@ -85,7 +85,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 <pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = CANINETokenizer()
-&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=&quot;longest_first&quot;, add_special_tokens=False)
 &gt;&gt;&gt; assert results['input_ids'].shape == (2, 25, 768), results['input_ids'].shape
 </code></pre></div>
 <details class="source">
@@ -112,7 +112,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
     &gt;&gt;&gt; from text_embeddings.hash import CANINETokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = CANINETokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=&#34;longest_first&#34;, add_special_tokens=False)
     &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 25, 768), results[&#39;input_ids&#39;].shape
     &#34;&#34;&#34;
 
@@ -177,6 +177,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -319,7 +320,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 <pre><code class="language-python-repl">&gt;&gt;&gt; from text_embeddings.hash import PQRNNTokenizer
 &gt;&gt;&gt; from transformers.tokenization_utils_base import *
 &gt;&gt;&gt; tokenier = PQRNNTokenizer()
-&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+&gt;&gt;&gt; results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=&quot;longest_first&quot;, add_special_tokens=False)
 &gt;&gt;&gt; assert results['input_ids'].shape == (2, 4, 768)
 </code></pre></div>
 <details class="source">
@@ -346,7 +347,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
     &gt;&gt;&gt; from text_embeddings.hash import PQRNNTokenizer
     &gt;&gt;&gt; from transformers.tokenization_utils_base import *
     &gt;&gt;&gt; tokenier = PQRNNTokenizer()
-    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    &gt;&gt;&gt; results = tokenier(text=[&#39;This is a sentence.&#39;, &#39;This is another sentence.&#39;], padding=PaddingStrategy.LONGEST, truncation=&#34;longest_first&#34;, add_special_tokens=False)
     &gt;&gt;&gt; assert results[&#39;input_ids&#39;].shape == (2, 4, 768)
     &#34;&#34;&#34;
 
@@ -411,6 +412,7 @@ __all__ = [&#39;PQRNNTokenizer&#39;, &#39;CANINETokenizer&#39;]</code></pre>
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>

@@ -990,10 +990,11 @@ This implementation borrows most implementation from huggingface's transformers 
 <ul class="hlist">
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="text_embeddings.byte.byt5.BYT5Tokenizer" href="../byte/byt5.html#text_embeddings.byte.byt5.BYT5Tokenizer">BYT5Tokenizer</a></li>
+<li><a title="text_embeddings.byte.byt5.ByT5Tokenizer" href="../byte/byt5.html#text_embeddings.byte.byt5.ByT5Tokenizer">ByT5Tokenizer</a></li>
 <li><a title="text_embeddings.byte.charformer.ByteTokenizer" href="../byte/charformer.html#text_embeddings.byte.charformer.ByteTokenizer">ByteTokenizer</a></li>
 <li><a title="text_embeddings.hash.canine.CANINETokenizer" href="../hash/canine.html#text_embeddings.hash.canine.CANINETokenizer">CANINETokenizer</a></li>
 <li><a title="text_embeddings.hash.pqrnn.PQRNNTokenizer" href="../hash/pqrnn.html#text_embeddings.hash.pqrnn.PQRNNTokenizer">PQRNNTokenizer</a></li>
@@ -1353,8 +1354,9 @@ If set to a number along with :obj:<code>max_length</code>, the overflowing toke
 returned to provide some overlap between truncated and overflowing sequences. The value of this
 argument defines the number of overlapping tokens.
 is_split_into_words (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not the input is already pre-tokenized (e.g., split into words), in which case the tokenizer
-will skip the pre-tokenization step. This is useful for NER or token classification.
+Whether or not the input is already pre-tokenized (e.g., split into words). If set to :obj:<code>True</code>, the
+tokenizer assumes the input is already split into words (for instance, by splitting it on whitespace)
+which it will tokenize. This is useful for NER or token classification.
 pad_to_multiple_of (:obj:<code>int</code>, <code>optional</code>):
 If set will pad the sequence to a multiple of the provided value. This is especially useful to enable
 the use of Tensor Cores on NVIDIA hardware with compute capability &gt;= 7.5 (Volta).

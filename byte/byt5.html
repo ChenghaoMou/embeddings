@@ -40,7 +40,7 @@ from text_embeddings.base import EmbeddingTokenizer
 from loguru import logger
 
 
-class BYT5Tokenizer(EmbeddingTokenizer):
+class ByT5Tokenizer(EmbeddingTokenizer):
     &#34;&#34;&#34;Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.
 
     Parameters
@@ -56,7 +56,7 @@ class BYT5Tokenizer(EmbeddingTokenizer):
 
     Examples
     --------
-    &gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+    &gt;&gt;&gt; tokenizer = ByT5Tokenizer()
     &gt;&gt;&gt; e = tokenizer.text2embeddings(&#34;This is a test message&#34;)
     &gt;&gt;&gt; e.shape
     (22, 259)
@@ -92,7 +92,7 @@ class BYT5Tokenizer(EmbeddingTokenizer):
             self.special_tokens[&#34;CLS&#34;][1] = 1
             self.special_tokens[&#34;SEP&#34;][2] = 1
 
-        logger.info(&#34;Be sure to add an embedding layer when using a BYT5Tokenizer.&#34;)
+        logger.info(&#34;Be sure to add an embedding layer when using a ByT5Tokenizer.&#34;)
 
     def text2embeddings(self, text: str) -&gt; np.ndarray:
         &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, embed_size) shape.
@@ -145,8 +145,8 @@ class BYT5Tokenizer(EmbeddingTokenizer):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer"><code class="flex name class">
-<span>class <span class="ident">BYT5Tokenizer</span></span>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer"><code class="flex name class">
+<span>class <span class="ident">ByT5Tokenizer</span></span>
 <span>(</span><span>embed_size: int = 259, model_input_names: Union[List[str], NoneType] = None, special_tokens: Union[Dict[str, numpy.ndarray], NoneType] = None, max_length: Union[int, NoneType] = 1024)</span>
 </code></dt>
 <dd>
@@ -163,7 +163,7 @@ class BYT5Tokenizer(EmbeddingTokenizer):
 <dd>Maximum character length, by default 1024</dd>
 </dl>
 <h2 id="examples">Examples</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+<pre><code class="language-python-repl">&gt;&gt;&gt; tokenizer = ByT5Tokenizer()
 &gt;&gt;&gt; e = tokenizer.text2embeddings(&quot;This is a test message&quot;)
 &gt;&gt;&gt; e.shape
 (22, 259)
@@ -174,7 +174,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class BYT5Tokenizer(EmbeddingTokenizer):
+<pre><code class="python">class ByT5Tokenizer(EmbeddingTokenizer):
     &#34;&#34;&#34;Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.
 
     Parameters
@@ -190,7 +190,7 @@ True
 
     Examples
     --------
-    &gt;&gt;&gt; tokenizer = BYT5Tokenizer()
+    &gt;&gt;&gt; tokenizer = ByT5Tokenizer()
     &gt;&gt;&gt; e = tokenizer.text2embeddings(&#34;This is a test message&#34;)
     &gt;&gt;&gt; e.shape
     (22, 259)
@@ -226,7 +226,7 @@ True
             self.special_tokens[&#34;CLS&#34;][1] = 1
             self.special_tokens[&#34;SEP&#34;][2] = 1
 
-        logger.info(&#34;Be sure to add an embedding layer when using a BYT5Tokenizer.&#34;)
+        logger.info(&#34;Be sure to add an embedding layer when using a ByT5Tokenizer.&#34;)
 
     def text2embeddings(self, text: str) -&gt; np.ndarray:
         &#34;&#34;&#34;Convert text into an numpy array, in (sequence_length, embed_size) shape.
@@ -274,37 +274,38 @@ True
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.max_model_input_sizes"><code class="name">var <span class="ident">max_model_input_sizes</span> : Dict[str, Union[int, NoneType]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.model_input_names"><code class="name">var <span class="ident">model_input_names</span> : List[str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.padding_side"><code class="name">var <span class="ident">padding_side</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_init_configuration"><code class="name">var <span class="ident">pretrained_init_configuration</span> : Dict[str, Dict[str, Any]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding"><code class="name flex">
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.create_padding_token_embedding"><code class="name flex">
 <span>def <span class="ident">create_padding_token_embedding</span></span>(<span>self, input_embeddings=None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
@@ -341,7 +342,7 @@ True
     return e</code></pre>
 </details>
 </dd>
-<dt id="text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings"><code class="name flex">
+<dt id="text_embeddings.byte.byt5.ByT5Tokenizer.text2embeddings"><code class="name flex">
 <span>def <span class="ident">text2embeddings</span></span>(<span>self, text: str) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
@@ -416,16 +417,16 @@ True
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer" href="#text_embeddings.byte.byt5.BYT5Tokenizer">BYT5Tokenizer</a></code></h4>
+<h4><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer" href="#text_embeddings.byte.byt5.ByT5Tokenizer">ByT5Tokenizer</a></code></h4>
 <ul class="">
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding" href="#text_embeddings.byte.byt5.BYT5Tokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes" href="#text_embeddings.byte.byt5.BYT5Tokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names" href="#text_embeddings.byte.byt5.BYT5Tokenizer.model_input_names">model_input_names</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.padding_side" href="#text_embeddings.byte.byt5.BYT5Tokenizer.padding_side">padding_side</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration" href="#text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map" href="#text_embeddings.byte.byt5.BYT5Tokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings" href="#text_embeddings.byte.byt5.BYT5Tokenizer.text2embeddings">text2embeddings</a></code></li>
-<li><code><a title="text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names" href="#text_embeddings.byte.byt5.BYT5Tokenizer.vocab_files_names">vocab_files_names</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.create_padding_token_embedding" href="#text_embeddings.byte.byt5.ByT5Tokenizer.create_padding_token_embedding">create_padding_token_embedding</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.max_model_input_sizes" href="#text_embeddings.byte.byt5.ByT5Tokenizer.max_model_input_sizes">max_model_input_sizes</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.model_input_names" href="#text_embeddings.byte.byt5.ByT5Tokenizer.model_input_names">model_input_names</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.padding_side" href="#text_embeddings.byte.byt5.ByT5Tokenizer.padding_side">padding_side</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_init_configuration" href="#text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_vocab_files_map" href="#text_embeddings.byte.byt5.ByT5Tokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.text2embeddings" href="#text_embeddings.byte.byt5.ByT5Tokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.byte.byt5.ByT5Tokenizer.vocab_files_names" href="#text_embeddings.byte.byt5.ByT5Tokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>
 </ul>

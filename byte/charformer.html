@@ -317,7 +317,7 @@ if __name__ == &#34;__main__&#34;:
         [&#34;Life is like a box of chocolates.&#34;, &#34;Coding is fun.&#34;],
         add_special_tokens=True,
         padding=PaddingStrategy.LONGEST,
-        truncation=TruncationStrategy.LONGEST_FIRST,
+        truncation=&#34;longest_first&#34;,
     )
 
     # Export the model
@@ -478,6 +478,7 @@ if __name__ == &#34;__main__&#34;:
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
+<li>transformers.file_utils.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
