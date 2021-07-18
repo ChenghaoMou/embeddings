@@ -9,12 +9,12 @@ from transformers.tokenization_utils_base import PaddingStrategy, TruncationStra
 
 @pytest.mark.parametrize(
     ('text_pair', 'add_special_tokens', 'stride', 'padding', 'truncation', 'return_attention_mask', 'return_special_tokens_mask', 'return_length'), [
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, True),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, False),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, False, True, True),
-        (True, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        (False, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
+        (True, True, 5, "longest", "longest_first", True, True, True),
+        (True, True, 5, "longest", "longest_first", True, True, False),
+        (True, True, 5, "longest", "longest_first", True, False, True),
+        (True, True, 5, "longest", "longest_first", False, True, True),
+        (True, False, 5, "longest", "longest_first", True, False, True),
+        (False, False, 5, "longest", "longest_first", True, False, True),
     ]
 )
 def test_canine_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, padding, truncation, return_attention_mask, return_special_tokens_mask, return_length):
@@ -57,12 +57,12 @@ def test_canine_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int
 
 @pytest.mark.parametrize(
     ('text_pair', 'add_special_tokens', 'stride', 'padding', 'truncation', 'return_attention_mask', 'return_special_tokens_mask', 'return_length'), [
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, True),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, True, False),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        (True, True, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, False, True, True),
-        (True, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
-        (False, False, 5, PaddingStrategy.LONGEST, TruncationStrategy.LONGEST_FIRST, True, False, True),
+        (True, True, 5, PaddingStrategy.LONGEST, "longest_first", True, True, True),
+        (True, True, 5, PaddingStrategy.LONGEST, "longest_first", True, True, False),
+        (True, True, 5, PaddingStrategy.LONGEST, "longest_first", True, False, True),
+        (True, True, 5, PaddingStrategy.LONGEST, "longest_first", False, True, True),
+        (True, False, 5, PaddingStrategy.LONGEST, "longest_first", True, False, True),
+        (False, False, 5, PaddingStrategy.LONGEST, "longest_first", True, False, True),
     ]
 )
 def test_pqrnn_tokenizer(text_pair: bool, add_special_tokens: bool, stride: int, padding, truncation, return_attention_mask, return_special_tokens_mask, return_length):

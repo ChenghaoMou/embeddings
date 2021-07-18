@@ -288,7 +288,7 @@ if __name__ == "__main__":
         ["Life is like a box of chocolates.", "Coding is fun."],
         add_special_tokens=True,
         padding=PaddingStrategy.LONGEST,
-        truncation=TruncationStrategy.LONGEST_FIRST,
+        truncation="longest_first",
     )
 
     # Export the model

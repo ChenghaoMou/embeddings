@@ -31,7 +31,7 @@ class PQRNNTokenizer(EmbeddingTokenizer):
     >>> from text_embeddings.hash import PQRNNTokenizer
     >>> from transformers.tokenization_utils_base import *
     >>> tokenier = PQRNNTokenizer()
-    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation=TruncationStrategy.LONGEST_FIRST, add_special_tokens=False)
+    >>> results = tokenier(text=['This is a sentence.', 'This is another sentence.'], padding=PaddingStrategy.LONGEST, truncation="longest_first", add_special_tokens=False)
     >>> assert results['input_ids'].shape == (2, 4, 768)
     """
 

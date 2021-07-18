@@ -11,7 +11,7 @@ from text_embeddings.base import EmbeddingTokenizer
 from loguru import logger
 
 
-class BYT5Tokenizer(EmbeddingTokenizer):
+class ByT5Tokenizer(EmbeddingTokenizer):
     """Embed text into byte sequences. This is different from other tokenizers because it still has a small vocabulary where each byte is mapped to an index.
 
     Parameters
@@ -27,7 +27,7 @@ class BYT5Tokenizer(EmbeddingTokenizer):
 
     Examples
     --------
-    >>> tokenizer = BYT5Tokenizer()
+    >>> tokenizer = ByT5Tokenizer()
     >>> e = tokenizer.text2embeddings("This is a test message")
     >>> e.shape
     (22, 259)
@@ -63,7 +63,7 @@ class BYT5Tokenizer(EmbeddingTokenizer):
             self.special_tokens["CLS"][1] = 1
             self.special_tokens["SEP"][2] = 1
 
-        logger.info("Be sure to add an embedding layer when using a BYT5Tokenizer.")
+        logger.info("Be sure to add an embedding layer when using a ByT5Tokenizer.")
 
     def text2embeddings(self, text: str) -> np.ndarray:
         """Convert text into an numpy array, in (sequence_length, embed_size) shape.

@@ -3,11 +3,12 @@
 
 ## Features
 
--   [x] Visual text embeddings ([Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1))
--   [x] Word-level hash embeddings ([PRADO/PQRNN](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html))
--   [x] Char-level hash embeddings ([CANINE](https://arxiv.org/abs/2103.06874))
--   [x] Byte-level embeddings ([ByT5](https://arxiv.org/pdf/2105.13626.pdf))
--   [x] Byte-level embedding module ([Charformer](https://arxiv.org/abs/2106.12672))
+-   [x] `VTRTokenizer` from [Robust Open­-Vocabulary Translation from Visual Text Representations](https://t.co/l9E6rL8O5p?amp=1)
+-   [x] `PQRNNTokenizer` from [Advancing NLP with Efficient Projection-Based Model Architectures](https://ai.googleblog.com/2020/09/advancing-nlp-with-efficient-projection.html)
+-   [x] `CANINETokenizer` from [CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation](https://arxiv.org/abs/2103.06874)
+-   [x] `ByT5Tokenizer` from [ByT5: Towards a token-free future with pre-trained byte-to-byte models](https://arxiv.org/pdf/2105.13626.pdf)
+-   [x] `GBST` and `ByteTokenizer` from [Charformer: Fast Character Transformers via Gradient-based Subword Tokenization](https://arxiv.org/abs/2106.12672)
+-   [x] `LTPMultiHeadAttention` from [Learned Token Pruning for Transformers](https://arxiv.org/abs/2107.00910)
 
 ## Examples
 
@@ -28,7 +29,6 @@ pip install text-embeddings --upgrade
 
 ```python
 from text_embeddings.visual import VTRTokenizer
-from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
 
 data = [
 "Hello world!",
@@ -39,7 +39,7 @@ data = [
 tokenizer = VTRTokenizer(
     font_size=14,
     window_size=10,
-    font="~/Library/Fonts/NotoSansDisplay-Regular.ttf",
+    font="resources/NotoSans-Regular.ttf",
     max_length=36
 )
 
@@ -47,9 +47,9 @@ results = tokenizer(
     text=data,
     text_pair=data,
     add_special_tokens=True,
-    padding=PaddingStrategy.LONGEST, 
+    padding="longest", 
     return_tensors='pt',
-    truncation=TruncationStrategy.LONGEST_FIRST, 
+    truncation="longest_first", 
     return_attention_mask=True, 
     return_special_tokens_mask=True,
     return_length=True,
@@ -99,7 +99,6 @@ class MyOwnTokenizer(EmbeddingTokenizer):
 ```python
 import torch.onnx  # nightly torch only
 from text_embeddings.byte.charformer import GBST, ByteTokenizer
-from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
 
 model = GBST(
     embed_size=128,
@@ -113,8 +112,8 @@ tokenizer = ByteTokenizer()
 results = tokenizer(
     ["Life is like a box of chocolates.", "Coding is fun."],
     add_special_tokens=True,
-    padding=PaddingStrategy.LONGEST,
-    truncation=TruncationStrategy.LONGEST_FIRST,
+    padding="longest",
+    truncation="longest_first",
 )
 
 # Export the model
