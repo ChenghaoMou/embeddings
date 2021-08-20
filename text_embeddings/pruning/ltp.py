@@ -105,7 +105,7 @@ class LTPMultiHeadAttention(nn.MultiheadAttention):
         """
         if self.batch_first:
             query, key, value = [x.transpose(1, 0) for x in (query, key, value)]
-
+        
         if not self._qkv_same_embed_dim:
             attn_output, attn_output_weights = F.multi_head_attention_forward(
                 query,
