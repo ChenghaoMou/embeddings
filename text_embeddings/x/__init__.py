@@ -5,6 +5,7 @@
 
 """X is a Perceiver-based encoder model that incorporates byte hash embeddings, learned token pruning and layer wise adaptive computation (inspired from PonderNet)."""
 
+import math
 from typing import Callable
 
 import torch
@@ -12,6 +13,30 @@ import torch.nn as nn
 
 from torch import Tensor
 from einops import repeat, rearrange
+
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000, batch_first: bool = False):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+        self.batch_first = batch_first
+
+    def forward(self, x: Tensor) -> Tensor:
+        """
+        Args:
+            x: Tensor, shape [seq_len, batch_size, embedding_dim]
+        """
+        if self.batch_first:
+            x = x.transpose(1, 0)
+        x = x + self.pe[:x.size(0)]
+        return self.dropout(x) if not self.batch_first else self.dropout(x).transpose(0, 1)
 
 
 class AttentionWrapper(nn.Module):
@@ -150,11 +175,13 @@ class X(nn.Module):
         ff_dim: int,
         dropout: float,
         batch_first: bool,
+        max_length: int,
         latent_attention: Callable,
     ):
         super().__init__()
 
         self.embedding = nn.Embedding(256 + 1, embed_dim, padding_idx=0)
+        self.positional_embedding = PositionalEncoding(embed_dim, dropout=dropout, max_len=max_length, batch_first=batch_first)
         self.layers = nn.ModuleList(
             [
                 XLayer(
@@ -184,6 +211,7 @@ class X(nn.Module):
 
         batch_size, *_ = x.shape
         x = self.embedding(x)
+        x = self.positional_embedding(x)
         un_halted_prob = x.new_ones((batch_size,))
         halted = x.new_zeros((batch_size,))
 
