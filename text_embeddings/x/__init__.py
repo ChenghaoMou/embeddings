@@ -141,16 +141,16 @@ class X(nn.Module):
     def __init__(
         self,
         num_classes: int,
-        latent_dim: int = 512,
-        num_layers: int = 12,
-        embed_dim: int = 512,
-        num_cross_attention_heads: int = 1,
-        num_latent_attention_heads: int = 8,
-        num_latent_layers: int = 2,
-        ff_dim: int = 1024,
-        dropout: float = 0.1,
-        batch_first: bool = False,
-        latent_attention: Callable = nn.MultiheadAttention,
+        latent_dim: int,
+        num_layers: int,
+        embed_dim: int,
+        num_cross_attention_heads: int,
+        num_latent_attention_heads: int,
+        num_latent_layers: int,
+        ff_dim: int,
+        dropout: float,
+        batch_first: bool,
+        latent_attention: Callable,
     ):
         super().__init__()
 

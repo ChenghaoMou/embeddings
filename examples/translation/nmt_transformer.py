@@ -12,8 +12,7 @@ from sklearn.model_selection import train_test_split as tts
 from spacy.lang.en import English
 from text_embeddings.visual import VTRTokenizer
 from torch.optim import Adam
-from torch.utils.data import (BatchSampler, DataLoader, Dataset,
-                              SequentialSampler)
+from torch.utils.data import BatchSampler, DataLoader, Dataset, SequentialSampler
 from tqdm import tqdm
 from transformers import get_cosine_schedule_with_warmup
 
@@ -29,7 +28,7 @@ def gen_no_peek_mask(length: int) -> np.ndarray:
     Returns
     -------
     nd.ndarray
-        An N by N mask where allowed positions are marked 
+        An N by N mask where allowed positions are marked
         as zeros while others are negative infinities
     """
     mask = rearrange(torch.triu(torch.ones(length, length)) == 1, "h w -> w h")
@@ -64,7 +63,9 @@ class Translator(pl.LightningModule):
         self.max_seq_length = max_seq_length
         self.embed_tgt = nn.Embedding(vocab_size, d_model)
         self.pos_enc = PositionalEncoding(d_model, pos_dropout, max_seq_length)
-        logger.debug(f"lr: {self.lr}, d_model: {d_model}, max_seq_length: {max_seq_length}")
+        logger.debug(
+            f"lr: {self.lr}, d_model: {d_model}, max_seq_length: {max_seq_length}"
+        )
 
         self.transformer = nn.Transformer(
             d_model,

@@ -9,6 +9,7 @@
 -   [x] `ByT5Tokenizer` from [ByT5: Towards a token-free future with pre-trained byte-to-byte models](https://arxiv.org/pdf/2105.13626.pdf)
 -   [x] `GBST` and `ByteTokenizer` from [Charformer: Fast Character Transformers via Gradient-based Subword Tokenization](https://arxiv.org/abs/2106.12672)
 -   [x] `LTPMultiHeadAttention` from [Learned Token Pruning for Transformers](https://arxiv.org/abs/2107.00910)
+-   [x] `X` and `XLoss`, a model inspired from [PonderNet](https://arxiv.org/abs/2107.05407) and [Perceiver](https://arxiv.org/abs/2103.03206), with Byte Embeddings.
 
 ## Examples
 

@@ -273,7 +273,7 @@ class GBST(nn.Module):
 if __name__ == "__main__":
 
     import torch.onnx  # nightly torch only
-    from transformers.tokenization_utils_base import PaddingStrategy, TruncationStrategy
+    from transformers.tokenization_utils_base import PaddingStrategy
 
     model = GBST(
         embed_size=128,

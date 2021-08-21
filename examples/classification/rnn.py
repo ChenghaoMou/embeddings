@@ -11,25 +11,33 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from typing import Optional
 from text_embeddings.visual import VTRTokenizer
-from loguru import logger
 from einops import rearrange
+
 
 class Model(pl.LightningModule):
     def __init__(
         self, hidden: int = 128, learning_rate: float = 1e-3, num_labels: int = 20
     ):
         super().__init__()
-        self.model = nn.GRU(hidden, hidden, num_layers=2, bidirectional=True, batch_first=True)
+        self.model = nn.GRU(
+            hidden, hidden, num_layers=2, bidirectional=True, batch_first=True
+        )
         self.nonlinear = nn.ReLU()
         self.fc = nn.Linear(hidden * 2, num_labels)
         self.loss = nn.CrossEntropyLoss(ignore_index=0)
         self.lr = learning_rate
 
     def forward(self, batch):
-        
+
         embeddings = batch["input_ids"].float()
-        logits, _ = self.model(rearrange(embeddings, 'b s h w -> b s (h w)'))
-        logits = torch.cat([logits[:, :, :logits.shape[-1]//2], logits[:, :, logits.shape[-1]//2:]], dim=-1)
+        logits, _ = self.model(rearrange(embeddings, "b s h w -> b s (h w)"))
+        logits = torch.cat(
+            [
+                logits[:, :, : logits.shape[-1] // 2],
+                logits[:, :, logits.shape[-1] // 2 :],
+            ],
+            dim=-1,
+        )
         logits = torch.mean(logits, dim=1)
         logits = self.nonlinear(logits)
         logits = self.fc(logits)
@@ -47,7 +55,7 @@ class Model(pl.LightningModule):
         logits = self.forward(inputs)
         # logger.debug(f"{labels.shape, logits.shape}")
         loss = self.loss(logits, labels)
-        
+
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         return {"val_loss": loss}
 
