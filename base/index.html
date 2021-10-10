@@ -1308,7 +1308,9 @@ Whether or not to print more information and warnings.</p></div>
 <dd>
 <div class="desc"><p>Prepares a sequence of input id, or a pair of sequences of inputs ids so that it can be used by the model. It
 adds special tokens, truncates sequences if overflowing while taking into account the special tokens and
-manages a moving window (with user defined stride) for overflowing tokens</p>
+manages a moving window (with user defined stride) for overflowing tokens. Please Note, for <code>pair_ids</code>
+different than <code>None</code> and <code>truncation_strategy = longest_first</code> or <code>True</code>, it is not possible to return
+overflowing tokens. Such a combination of arguments will raise an error.</p>
 <h2 id="args">Args</h2>
 <p>ids (:obj:<code>List[int]</code>):
 Tokenized input ids of the first sequence. Can be obtained from a string by chaining the <code>tokenize</code>
@@ -1377,7 +1379,9 @@ to the specific tokenizer's default, defined by the :obj:<code>return_outputs</c
 <pre><code>`What are attention masks? &lt;../glossary.html#attention-mask&gt;`__
 </code></pre>
 <p>return_overflowing_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not to return overflowing token sequences.
+Whether or not to return overflowing token sequences. If a pair of sequences of input ids (or a batch
+of pairs) is provided with :obj:<code>truncation_strategy = longest_first</code> or :obj:<code>True</code>, an error is
+raised instead of returning overflowing tokens.
 return_special_tokens_mask (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
 Whether or not to return special tokens mask information.
 return_offsets_mapping (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
