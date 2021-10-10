@@ -13,6 +13,7 @@ import torch.nn as nn
 
 from torch import Tensor
 from einops import repeat, rearrange
+from transformers import CanineModel
 
 class PositionalEncoding(nn.Module):
 
@@ -180,8 +181,8 @@ class X(nn.Module):
     ):
         super().__init__()
 
-        self.embedding = nn.Embedding(256 + 1, embed_dim, padding_idx=0)
-        self.positional_embedding = PositionalEncoding(embed_dim, dropout=dropout, max_len=max_length, batch_first=batch_first)
+        self.embedding = CanineModel.from_pretrained('google/canine-s')
+        self.embedding_ff = nn.Linear(768, embed_dim)
         self.layers = nn.ModuleList(
             [
                 XLayer(
@@ -205,13 +206,16 @@ class X(nn.Module):
 
     def forward(
         self,
-        x,
-        mask=None,
+        **inputs
     ):
-
+        
+        mask = inputs.get("attention_mask", None)
+        with torch.no_grad():
+            outputs = self.embedding(**inputs)
+            x = outputs.last_hidden_state
+        
+        x = self.embedding_ff(x)
         batch_size, *_ = x.shape
-        x = self.embedding(x)
-        x = self.positional_embedding(x)
         un_halted_prob = x.new_ones((batch_size,))
         halted = x.new_zeros((batch_size,))
 
