@@ -214,36 +214,57 @@ class LTPMultiHeadAttention(nn.MultiheadAttention):
 </code></dt>
 <dd>
 <div class="desc"><p>Allows the model to jointly attend to information
-from different representation subspaces.
-See <code>Attention Is All You Need &lt;https://arxiv.org/abs/1706.03762&gt;</code>_</p>
+from different representation subspaces as described in the paper:
+<code>Attention Is All You Need &lt;https://arxiv.org/abs/1706.03762&gt;</code>_.</p>
+<p>Multi-Head Attention is defined as:</p>
 <p>[ \text{MultiHead}(Q, K, V) = \text{Concat}(head_1,\dots,head_h)W^O ]
 where :math:<code>head_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)</code>.</p>
+<p><code>forward()</code> will use a special optimized implementation if all of the following
+conditions are met:</p>
+<ul>
+<li>self attention is being computed (i.e., <code>query</code>, <code>key</code>, and <code>value</code> are the same tensor. This
+restriction will be loosened in the future.)</li>
+<li>Either autograd is disabled (using <code>torch.inference_mode</code> or <code>torch.no_grad</code>) or no tensor argument <code>requires_grad</code></li>
+<li>training is disabled (using <code>.eval()</code>)</li>
+<li>dropout is 0</li>
+<li><code>add_bias_kv</code> is <code>False</code></li>
+<li><code>add_zero_attn</code> is <code>False</code></li>
+<li><code>batch_first</code> is <code>True</code> and the input is batched</li>
+<li><code>kdim</code> and <code>vdim</code> are equal to <code>embed_dim</code></li>
+<li>at most one of <code>key_padding_mask</code> or <code>attn_mask</code> is passed</li>
+<li>if a <code>NestedTensor &lt;https://pytorch.org/docs/stable/nested.html&gt;</code>_ is passed, neither <code>key_padding_mask</code>
+nor <code>attn_mask</code> is passed</li>
+</ul>
+<p>If the optimized implementation is in use, a
+<code>NestedTensor &lt;https://pytorch.org/docs/stable/nested.html&gt;</code><em> can be passed for
+<code>query</code>/<code>key</code>/<code>value</code> to represent padding more efficiently than using a
+padding mask. In this case, a <code>NestedTensor &lt;https://pytorch.org/docs/stable/nested.html&gt;</code></em>
+will be returned, and an additional speedup proportional to the fraction of the input
+that is padding can be expected.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>embed_dim</code></strong></dt>
-<dd>total dimension of the model.</dd>
+<dd>Total dimension of the model.</dd>
 <dt><strong><code>num_heads</code></strong></dt>
-<dd>parallel attention heads.</dd>
+<dd>Number of parallel attention heads. Note that <code>embed_dim</code> will be split
+across <code>num_heads</code> (i.e. each head will have dimension <code>embed_dim // num_heads</code>).</dd>
 <dt><strong><code>dropout</code></strong></dt>
-<dd>a Dropout layer on attn_output_weights. Default: 0.0.</dd>
+<dd>Dropout probability on <code>attn_output_weights</code>. Default: <code>0.0</code> (no dropout).</dd>
 <dt><strong><code>bias</code></strong></dt>
-<dd>add bias as module parameter. Default: True.</dd>
+<dd>If specified, adds bias to input / output projection layers. Default: <code>True</code>.</dd>
 <dt><strong><code>add_bias_kv</code></strong></dt>
-<dd>add bias to the key and value sequences at dim=0.</dd>
+<dd>If specified, adds bias to the key and value sequences at dim=0. Default: <code>False</code>.</dd>
 <dt><strong><code>add_zero_attn</code></strong></dt>
-<dd>add a new batch of zeros to the key and
-value sequences at dim=1.</dd>
+<dd>If specified, adds a new batch of zeros to the key and value sequences at dim=1.
+Default: <code>False</code>.</dd>
 <dt><strong><code>kdim</code></strong></dt>
-<dd>total number of features in key. Default: None.</dd>
+<dd>Total number of features for keys. Default: <code>None</code> (uses <code>kdim=embed_dim</code>).</dd>
 <dt><strong><code>vdim</code></strong></dt>
-<dd>total number of features in value. Default: None.</dd>
+<dd>Total number of features for values. Default: <code>None</code> (uses <code>vdim=embed_dim</code>).</dd>
 <dt><strong><code>batch_first</code></strong></dt>
 <dd>If <code>True</code>, then the input and output tensors are provided
 as (batch, seq, feature). Default: <code>False</code> (seq, batch, feature).</dd>
 </dl>
-<p>Note that if :attr:<code>kdim</code> and :attr:<code>vdim</code> are None, they will be set
-to :attr:<code>embed_dim</code> such that query, key, and value have the same
-number of features.</p>
 <p>Examples::</p>
 <pre><code>&gt;&gt;&gt; multihead_attn = nn.MultiheadAttention(embed_dim, num_heads)
 &gt;&gt;&gt; attn_output, attn_output_weights = multihead_attn(query, key, value)

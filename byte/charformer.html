@@ -478,7 +478,7 @@ if __name__ == &#34;__main__&#34;:
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
-<li>transformers.file_utils.PushToHubMixin</li>
+<li>transformers.utils.hub.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -499,6 +499,10 @@ if __name__ == &#34;__main__&#34;:
 <div class="desc"></div>
 </dd>
 <dt id="text_embeddings.byte.charformer.ByteTokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.byte.charformer.ByteTokenizer.truncation_side"><code class="name">var <span class="ident">truncation_side</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -866,7 +870,7 @@ import torch.nn.functional as F
 
 class Model(nn.Module):
     def __init__(self):
-        super(Model, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(1, 20, 5)
         self.conv2 = nn.Conv2d(20, 20, 5)
 
@@ -876,6 +880,11 @@ class Model(nn.Module):
 </code></pre>
 <p>Submodules assigned in this way will be registered, and will have their
 parameters converted too when you call :meth:<code>to</code>, etc.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As per the example above, an <code>__init__()</code> call to the parent class
+must be made before assignment on the child.</p>
+</div>
 <p>:ivar training: Boolean represents whether this module is in training or
 evaluation mode.
 :vartype training: bool</p>
@@ -984,6 +993,7 @@ registered hooks while the latter silently ignores them.</p>
 <li><code><a title="text_embeddings.byte.charformer.ByteTokenizer.pretrained_init_configuration" href="#text_embeddings.byte.charformer.ByteTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
 <li><code><a title="text_embeddings.byte.charformer.ByteTokenizer.pretrained_vocab_files_map" href="#text_embeddings.byte.charformer.ByteTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
 <li><code><a title="text_embeddings.byte.charformer.ByteTokenizer.text2embeddings" href="#text_embeddings.byte.charformer.ByteTokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.byte.charformer.ByteTokenizer.truncation_side" href="#text_embeddings.byte.charformer.ByteTokenizer.truncation_side">truncation_side</a></code></li>
 <li><code><a title="text_embeddings.byte.charformer.ByteTokenizer.vocab_files_names" href="#text_embeddings.byte.charformer.ByteTokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>

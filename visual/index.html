@@ -54,7 +54,7 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="text_embeddings.visual.text2image"><code class="name flex">
-<span>def <span class="ident">text2image</span></span>(<span>text: str, font: str, font_size: int = 14) ‑> <module 'PIL.Image' from '/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/PIL/Image.py'></span>
+<span>def <span class="ident">text2image</span></span>(<span>text: str, font: str, font_size: int = 14) ‑> <module 'PIL.Image' from '/opt/hostedtoolcache/Python/3.8.13/x64/lib/python3.8/site-packages/PIL/Image.py'></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert text into an image and return the image. Reference: <a href="https://gist.github.com/destan/5540702">https://gist.github.com/destan/5540702</a></p>
@@ -215,7 +215,7 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
         image_array = np.asarray(image)
 
         return np.squeeze(
-            sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
+            sliding_window_view(image_array, (image_array.shape[0], min(self.window_size, image_array.shape[1]))),
             axis=0,
         )[:: self.stride]
 
@@ -239,7 +239,7 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
 <li><a title="text_embeddings.base.EmbeddingTokenizer" href="../base/index.html#text_embeddings.base.EmbeddingTokenizer">EmbeddingTokenizer</a></li>
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
-<li>transformers.file_utils.PushToHubMixin</li>
+<li>transformers.utils.hub.PushToHubMixin</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -260,6 +260,10 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
 <div class="desc"></div>
 </dd>
 <dt id="text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map"><code class="name">var <span class="ident">pretrained_vocab_files_map</span> : Dict[str, Dict[str, str]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="text_embeddings.visual.VTRTokenizer.truncation_side"><code class="name">var <span class="ident">truncation_side</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -344,7 +348,7 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
     image_array = np.asarray(image)
 
     return np.squeeze(
-        sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
+        sliding_window_view(image_array, (image_array.shape[0], min(self.window_size, image_array.shape[1]))),
         axis=0,
     )[:: self.stride]</code></pre>
 </details>
@@ -399,6 +403,7 @@ __all__ = [&#39;VTRTokenizer&#39;, &#39;text2image&#39;]</code></pre>
 <li><code><a title="text_embeddings.visual.VTRTokenizer.pretrained_init_configuration" href="#text_embeddings.visual.VTRTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
 <li><code><a title="text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map" href="#text_embeddings.visual.VTRTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
 <li><code><a title="text_embeddings.visual.VTRTokenizer.text2embeddings" href="#text_embeddings.visual.VTRTokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.visual.VTRTokenizer.truncation_side" href="#text_embeddings.visual.VTRTokenizer.truncation_side">truncation_side</a></code></li>
 <li><code><a title="text_embeddings.visual.VTRTokenizer.vocab_files_names" href="#text_embeddings.visual.VTRTokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>

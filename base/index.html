@@ -990,7 +990,7 @@ This implementation borrows most implementation from huggingface's transformers 
 <ul class="hlist">
 <li>transformers.tokenization_utils_base.PreTrainedTokenizerBase</li>
 <li>transformers.tokenization_utils_base.SpecialTokensMixin</li>
-<li>transformers.file_utils.PushToHubMixin</li>
+<li>transformers.utils.hub.PushToHubMixin</li>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
@@ -1022,6 +1022,10 @@ This implementation borrows most implementation from huggingface's transformers 
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="text_embeddings.base.EmbeddingTokenizer.truncation_side"><code class="name">var <span class="ident">truncation_side</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="text_embeddings.base.EmbeddingTokenizer.vocab_files_names"><code class="name">var <span class="ident">vocab_files_names</span> : Dict[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
@@ -1037,10 +1041,10 @@ This implementation borrows most implementation from huggingface's transformers 
 adding special tokens.</p>
 <p>This implementation does not add special tokens and this method should be overridden in a subclass.</p>
 <h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>): The first tokenized sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tokenized sequence.</p>
+<p>token_ids_0 (<code>List[int]</code>): The first tokenized sequence.
+token_ids_1 (<code>List[int]</code>, <em>optional</em>): The second tokenized sequence.</p>
 <h2 id="returns">Returns</h2>
-<p>:obj:<code>List[int]</code>: The model input with special tokens.</p></div>
+<p><code>List[int]</code>: The model input with special tokens.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1080,14 +1084,14 @@ token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tok
 <span>def <span class="ident">create_token_type_ids_from_sequences</span></span>(<span>self, token_ids_0: List[int], token_ids_1: Union[List[int], NoneType] = None) ‑> List[int]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create the token type IDs corresponding to the sequences passed. <code>What are token type IDs?
-&lt;../glossary.html#token-type-ids&gt;</code>__</p>
+<div class="desc"><p>Create the token type IDs corresponding to the sequences passed. <a href="../glossary#token-type-ids">What are token type
+IDs?</a></p>
 <p>Should be overridden in a subclass if the model has a special way of building those.</p>
 <h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>): The first tokenized sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tokenized sequence.</p>
+<p>token_ids_0 (<code>List[int]</code>): The first tokenized sequence.
+token_ids_1 (<code>List[int]</code>, <em>optional</em>): The second tokenized sequence.</p>
 <h2 id="returns">Returns</h2>
-<p>:obj:<code>List[int]</code>: The token type ids.</p></div>
+<p><code>List[int]</code>: The token type ids.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1108,11 +1112,11 @@ token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>): The second tok
 <div class="desc"><p>Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
 special tokens using the tokenizer <code>prepare_for_model</code> or <code>encode_plus</code> methods.</p>
 <h2 id="args">Args</h2>
-<p>token_ids_0 (:obj:<code>List[int]</code>):
+<p>token_ids_0 (<code>List[int]</code>):
 List of ids of the first sequence.
-token_ids_1 (:obj:<code>List[int]</code>, <code>optional</code>):
+token_ids_1 (<code>List[int]</code>, <em>optional</em>):
 List of ids of the second sequence.
-already_has_special_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
+already_has_special_tokens (<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):
 Whether or not the token list is already formatted with special tokens for the model.</p>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -1145,57 +1149,56 @@ Whether or not the token list is already formatted with special tokens for the m
 </details>
 </dd>
 <dt id="text_embeddings.base.EmbeddingTokenizer.pad"><code class="name flex">
-<span>def <span class="ident">pad</span></span>(<span>self, encoded_inputs: Union[transformers.tokenization_utils_base.BatchEncoding, List[transformers.tokenization_utils_base.BatchEncoding], Dict[str, List[int]], Dict[str, List[List[int]]], List[Dict[str, List[int]]]], padding: Union[bool, str, transformers.file_utils.PaddingStrategy] = True, max_length: Union[int, NoneType] = None, pad_to_multiple_of: Union[int, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_tensors: Union[str, transformers.file_utils.TensorType, NoneType] = None) ‑> transformers.tokenization_utils_base.BatchEncoding</span>
+<span>def <span class="ident">pad</span></span>(<span>self, encoded_inputs: Union[transformers.tokenization_utils_base.BatchEncoding, List[transformers.tokenization_utils_base.BatchEncoding], Dict[str, List[int]], Dict[str, List[List[int]]], List[Dict[str, List[int]]]], padding: Union[bool, str, transformers.utils.generic.PaddingStrategy] = True, max_length: Union[int, NoneType] = None, pad_to_multiple_of: Union[int, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_tensors: Union[str, transformers.utils.generic.TensorType, NoneType] = None) ‑> transformers.tokenization_utils_base.BatchEncoding</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Pad a single encoded input or a batch of encoded inputs up to predefined length or to the max sequence length
 in the batch.</p>
 <p>Padding side (left/right) padding token ids are defined at the tokenizer level (with <code>self.padding_side</code>,
 <code>self.pad_token_id</code> and <code>self.pad_token_type_id</code>)</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<p><Tip></p>
 <p>If the <code>encoded_inputs</code> passed are dictionary of numpy arrays, PyTorch tensors or TensorFlow tensors, the
-result will use the same type unless you provide a different tensor type with <code>return_tensors</code>. In the
-case of PyTorch tensors, you will lose the specific device of your tensors however.</p>
-</div>
+result will use the same type unless you provide a different tensor type with <code>return_tensors</code>. In the case of
+PyTorch tensors, you will lose the specific device of your tensors however.</p>
+<p></Tip></p>
 <h2 id="args">Args</h2>
-<p>encoded_inputs (:class:<code>~transformers.BatchEncoding</code>, list of :class:<code>~transformers.BatchEncoding</code>, :obj:<code>Dict[str, List[int]]</code>, :obj:<code>Dict[str, List[List[int]]</code> or :obj:<code>List[Dict[str, List[int]]]</code>):
-Tokenized inputs. Can represent one input (:class:<code>~transformers.BatchEncoding</code> or :obj:<code>Dict[str,
-List[int]]</code>) or a batch of tokenized inputs (list of :class:<code>~transformers.BatchEncoding&lt;code&gt;, &lt;/code&gt;Dict[str,
-List[List[int]]]&lt;code&gt; or &lt;/code&gt;List[Dict[str, List[int]]]</code>) so you can use this method during preprocessing as
-well as in a PyTorch Dataloader collate function.</p>
-<pre><code>Instead of :obj:&lt;code&gt;List\[int]&lt;/code&gt; you can have tensors (numpy arrays, PyTorch tensors or TensorFlow tensors),
-see the note above for the return type.
+<p>encoded_inputs ([<code>BatchEncoding</code>], list of [<code>BatchEncoding</code>], <code>Dict[str, List[int]]</code>, <code>Dict[str, List[List[int]]</code> or <code>List[Dict[str, List[int]]]</code>):
+Tokenized inputs. Can represent one input ([<code>BatchEncoding</code>] or <code>Dict[str, List[int]]</code>) or a batch of
+tokenized inputs (list of [<code>BatchEncoding</code>], <em>Dict[str, List[List[int]]]</em> or <em>List[Dict[str,
+List[int]]]</em>) so you can use this method during preprocessing as well as in a PyTorch Dataloader
+collate function.</p>
+<pre><code>Instead of &lt;code&gt;List\[int]&lt;/code&gt; you can have tensors (numpy arrays, PyTorch tensors or TensorFlow tensors), see
+the note above for the return type.
 </code></pre>
-<p>padding (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.file_utils.PaddingStrategy</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
+<p>padding (<code>bool</code>, <code>str</code> or [<code>~utils.PaddingStrategy</code>], <em>optional</em>, defaults to <code>True</code>):
 Select a strategy to pad the returned sequences (according to the model's padding side and padding
 index) among:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest'`: Pad to the longest sequence in the batch (or no padding if only a
-  single sequence if provided).
-* :obj:`'max_length'`: Pad to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the
-  maximum acceptable input length for the model if that argument is not provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of
-  different lengths).
+<pre><code>- &lt;code&gt;True&lt;/code&gt; or `'longest'`: Pad to the longest sequence in the batch (or no padding if only a single
+  sequence if provided).
+- `'max_length'`: Pad to a maximum length specified with the argument &lt;code&gt;max\_length&lt;/code&gt; or to the maximum
+  acceptable input length for the model if that argument is not provided.
+- &lt;code&gt;False&lt;/code&gt; or `'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of different
+  lengths).
 </code></pre>
-<p>max_length (:obj:<code>int</code>, <code>optional</code>):
+<p>max_length (<code>int</code>, <em>optional</em>):
 Maximum length of the returned list and optionally padding length (see above).
-pad_to_multiple_of (:obj:<code>int</code>, <code>optional</code>):
+pad_to_multiple_of (<code>int</code>, <em>optional</em>):
 If set will pad the sequence to a multiple of the provided value.</p>
 <pre><code>This is especially useful to enable the use of Tensor Cores on NVIDIA hardware with compute capability
 &gt;= 7.5 (Volta).
 </code></pre>
-<p>return_attention_mask (:obj:<code>bool</code>, <code>optional</code>):
+<p>return_attention_mask (<code>bool</code>, <em>optional</em>):
 Whether to return the attention mask. If left to the default, will return the attention mask according
-to the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are attention masks? &lt;../glossary.html#attention-mask&gt;`__
+to the specific tokenizer's default, defined by the <code>return_outputs</code> attribute.</p>
+<pre><code>[What are attention masks?](../glossary#attention-mask)
 </code></pre>
-<p>return_tensors (:obj:<code>str</code> or :class:<code>~transformers.file_utils.TensorType</code>, <code>optional</code>):
+<p>return_tensors (<code>str</code> or [<code>~utils.TensorType</code>], <em>optional</em>):
 If set, will return tensors instead of list of python integers. Acceptable values are:</p>
-<pre><code>* :obj:`'tf'`: Return TensorFlow :obj:&lt;code&gt;tf.constant&lt;/code&gt; objects.
-* :obj:`'pt'`: Return PyTorch :obj:&lt;code&gt;torch.Tensor&lt;/code&gt; objects.
-* :obj:`'np'`: Return Numpy :obj:&lt;code&gt;np.ndarray&lt;/code&gt; objects.
+<pre><code>- `'tf'`: Return TensorFlow &lt;code&gt;tf.constant&lt;/code&gt; objects.
+- `'pt'`: Return PyTorch &lt;code&gt;torch.Tensor&lt;/code&gt; objects.
+- `'np'`: Return Numpy &lt;code&gt;np.ndarray&lt;/code&gt; objects.
 </code></pre>
-<p>verbose (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
+<p>verbose (<code>bool</code>, <em>optional</em>, defaults to <code>True</code>):
 Whether or not to print more information and warnings.</p></div>
 <details class="source">
 <summary>
@@ -1303,126 +1306,125 @@ Whether or not to print more information and warnings.</p></div>
 </details>
 </dd>
 <dt id="text_embeddings.base.EmbeddingTokenizer.prepare_for_model"><code class="name flex">
-<span>def <span class="ident">prepare_for_model</span></span>(<span>self, ids: List[int], pair_ids: Union[List[int], NoneType] = None, add_special_tokens: bool = True, padding: Union[bool, str, transformers.file_utils.PaddingStrategy] = False, truncation: Union[bool, str, transformers.tokenization_utils_base.TruncationStrategy] = False, max_length: Union[int, NoneType] = None, stride: int = 0, pad_to_multiple_of: Union[int, NoneType] = None, return_tensors: Union[str, transformers.file_utils.TensorType, NoneType] = None, return_token_type_ids: Union[bool, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_overflowing_tokens: bool = False, return_special_tokens_mask: bool = False, return_length: bool = False, prepend_batch_axis: bool = False, **kwargs)</span>
+<span>def <span class="ident">prepare_for_model</span></span>(<span>self, ids: List[int], pair_ids: Union[List[int], NoneType] = None, add_special_tokens: bool = True, padding: Union[bool, str, transformers.utils.generic.PaddingStrategy] = False, truncation: Union[bool, str, transformers.tokenization_utils_base.TruncationStrategy] = False, max_length: Union[int, NoneType] = None, stride: int = 0, pad_to_multiple_of: Union[int, NoneType] = None, return_tensors: Union[str, transformers.utils.generic.TensorType, NoneType] = None, return_token_type_ids: Union[bool, NoneType] = None, return_attention_mask: Union[bool, NoneType] = None, return_overflowing_tokens: bool = False, return_special_tokens_mask: bool = False, return_length: bool = False, prepend_batch_axis: bool = False, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Prepares a sequence of input id, or a pair of sequences of inputs ids so that it can be used by the model. It
 adds special tokens, truncates sequences if overflowing while taking into account the special tokens and
-manages a moving window (with user defined stride) for overflowing tokens. Please Note, for <code>pair_ids</code>
-different than <code>None</code> and <code>truncation_strategy = longest_first</code> or <code>True</code>, it is not possible to return
+manages a moving window (with user defined stride) for overflowing tokens. Please Note, for <em>pair_ids</em>
+different than <code>None</code> and <em>truncation_strategy = longest_first</em> or <code>True</code>, it is not possible to return
 overflowing tokens. Such a combination of arguments will raise an error.</p>
 <h2 id="args">Args</h2>
-<p>ids (:obj:<code>List[int]</code>):
-Tokenized input ids of the first sequence. Can be obtained from a string by chaining the <code>tokenize</code>
-and <code>convert_tokens_to_ids</code> methods.
-pair_ids (:obj:<code>List[int]</code>, <code>optional</code>):
+<p>ids (<code>List[int]</code>):
+Tokenized input ids of the first sequence. Can be obtained from a string by chaining the <code>tokenize</code> and
+<code>convert_tokens_to_ids</code> methods.
+pair_ids (<code>List[int]</code>, <em>optional</em>):
 Tokenized input ids of the second sequence. Can be obtained from a string by chaining the <code>tokenize</code>
 and <code>convert_tokens_to_ids</code> methods.</p>
-<p>add_special_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):
+<p>add_special_tokens (<code>bool</code>, <em>optional</em>, defaults to <code>True</code>):
 Whether or not to encode the sequences with the special tokens relative to their model.
-padding (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.file_utils.PaddingStrategy</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
+padding (<code>bool</code>, <code>str</code> or [<code>~utils.PaddingStrategy</code>], <em>optional</em>, defaults to <code>False</code>):
 Activates and controls padding. Accepts the following values:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest'`: Pad to the longest sequence in the batch (or no padding if only a
-  single sequence if provided).
-* :obj:`'max_length'`: Pad to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the
-  maximum acceptable input length for the model if that argument is not provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of
-  different lengths).
+<pre><code>- &lt;code&gt;True&lt;/code&gt; or `'longest'`: Pad to the longest sequence in the batch (or no padding if only a single
+  sequence if provided).
+- `'max_length'`: Pad to a maximum length specified with the argument &lt;code&gt;max\_length&lt;/code&gt; or to the maximum
+  acceptable input length for the model if that argument is not provided.
+- &lt;code&gt;False&lt;/code&gt; or `'do_not_pad'` (default): No padding (i.e., can output a batch with sequences of different
+  lengths).
 </code></pre>
-<p>truncation (:obj:<code>bool</code>, :obj:<code>str</code> or :class:<code>~transformers.tokenization_utils_base.TruncationStrategy</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
+<p>truncation (<code>bool</code>, <code>str</code> or [<code>~tokenization_utils_base.TruncationStrategy</code>], <em>optional</em>, defaults to <code>False</code>):
 Activates and controls truncation. Accepts the following values:</p>
-<pre><code>* :obj:&lt;code&gt;True&lt;/code&gt; or :obj:`'longest_first'`: Truncate to a maximum length specified with the argument
-  :obj:&lt;code&gt;max\_length&lt;/code&gt; or to the maximum acceptable input length for the model if that argument is not
-  provided. This will truncate token by token, removing a token from the longest sequence in the pair
-  if a pair of sequences (or a batch of pairs) is provided.
-* :obj:`'only_first'`: Truncate to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or to
-  the maximum acceptable input length for the model if that argument is not provided. This will only
+<pre><code>- &lt;code&gt;True&lt;/code&gt; or `'longest_first'`: Truncate to a maximum length specified with the argument &lt;code&gt;max\_length&lt;/code&gt; or
+  to the maximum acceptable input length for the model if that argument is not provided. This will
+  truncate token by token, removing a token from the longest sequence in the pair if a pair of
+  sequences (or a batch of pairs) is provided.
+- `'only_first'`: Truncate to a maximum length specified with the argument &lt;code&gt;max\_length&lt;/code&gt; or to the
+  maximum acceptable input length for the model if that argument is not provided. This will only
   truncate the first sequence of a pair if a pair of sequences (or a batch of pairs) is provided.
-* :obj:`'only_second'`: Truncate to a maximum length specified with the argument :obj:&lt;code&gt;max\_length&lt;/code&gt; or
-  to the maximum acceptable input length for the model if that argument is not provided. This will only
+- `'only_second'`: Truncate to a maximum length specified with the argument &lt;code&gt;max\_length&lt;/code&gt; or to the
+  maximum acceptable input length for the model if that argument is not provided. This will only
   truncate the second sequence of a pair if a pair of sequences (or a batch of pairs) is provided.
-* :obj:&lt;code&gt;False&lt;/code&gt; or :obj:`'do_not_truncate'` (default): No truncation (i.e., can output batch with
-  sequence lengths greater than the model maximum admissible input size).
+- &lt;code&gt;False&lt;/code&gt; or `'do_not_truncate'` (default): No truncation (i.e., can output batch with sequence lengths
+  greater than the model maximum admissible input size).
 </code></pre>
-<p>max_length (:obj:<code>int</code>, <code>optional</code>):
+<p>max_length (<code>int</code>, <em>optional</em>):
 Controls the maximum length to use by one of the truncation/padding parameters.</p>
-<pre><code>If left unset or set to :obj:&lt;code&gt;None&lt;/code&gt;, this will use the predefined model maximum length if a maximum
-length is required by one of the truncation/padding parameters. If the model has no specific maximum
-input length (like XLNet) truncation/padding to a maximum length will be deactivated.
+<pre><code>If left unset or set to &lt;code&gt;None&lt;/code&gt;, this will use the predefined model maximum length if a maximum length
+is required by one of the truncation/padding parameters. If the model has no specific maximum input
+length (like XLNet) truncation/padding to a maximum length will be deactivated.
 </code></pre>
-<p>stride (:obj:<code>int</code>, <code>optional</code>, defaults to 0):
-If set to a number along with :obj:<code>max_length</code>, the overflowing tokens returned when
-:obj:<code>return_overflowing_tokens=True</code> will contain some tokens from the end of the truncated sequence
+<p>stride (<code>int</code>, <em>optional</em>, defaults to 0):
+If set to a number along with <code>max_length</code>, the overflowing tokens returned when
+<code>return_overflowing_tokens=True</code> will contain some tokens from the end of the truncated sequence
 returned to provide some overlap between truncated and overflowing sequences. The value of this
 argument defines the number of overlapping tokens.
-is_split_into_words (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not the input is already pre-tokenized (e.g., split into words). If set to :obj:<code>True</code>, the
+is_split_into_words (<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):
+Whether or not the input is already pre-tokenized (e.g., split into words). If set to <code>True</code>, the
 tokenizer assumes the input is already split into words (for instance, by splitting it on whitespace)
 which it will tokenize. This is useful for NER or token classification.
-pad_to_multiple_of (:obj:<code>int</code>, <code>optional</code>):
+pad_to_multiple_of (<code>int</code>, <em>optional</em>):
 If set will pad the sequence to a multiple of the provided value. This is especially useful to enable
 the use of Tensor Cores on NVIDIA hardware with compute capability &gt;= 7.5 (Volta).
-return_tensors (:obj:<code>str</code> or :class:<code>~transformers.file_utils.TensorType</code>, <code>optional</code>):
+return_tensors (<code>str</code> or [<code>~utils.TensorType</code>], <em>optional</em>):
 If set, will return tensors instead of list of python integers. Acceptable values are:</p>
-<pre><code>* :obj:`'tf'`: Return TensorFlow :obj:&lt;code&gt;tf.constant&lt;/code&gt; objects.
-* :obj:`'pt'`: Return PyTorch :obj:&lt;code&gt;torch.Tensor&lt;/code&gt; objects.
-* :obj:`'np'`: Return Numpy :obj:&lt;code&gt;np.ndarray&lt;/code&gt; objects.
+<pre><code>- `'tf'`: Return TensorFlow &lt;code&gt;tf.constant&lt;/code&gt; objects.
+- `'pt'`: Return PyTorch &lt;code&gt;torch.Tensor&lt;/code&gt; objects.
+- `'np'`: Return Numpy &lt;code&gt;np.ndarray&lt;/code&gt; objects.
 </code></pre>
-<p>return_token_type_ids (:obj:<code>bool</code>, <code>optional</code>):
+<p>return_token_type_ids (<code>bool</code>, <em>optional</em>):
 Whether to return token type IDs. If left to the default, will return the token type IDs according to
-the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are token type IDs? &lt;../glossary.html#token-type-ids&gt;`__
+the specific tokenizer's default, defined by the <code>return_outputs</code> attribute.</p>
+<pre><code>[What are token type IDs?](../glossary#token-type-ids)
 </code></pre>
-<p>return_attention_mask (:obj:<code>bool</code>, <code>optional</code>):
+<p>return_attention_mask (<code>bool</code>, <em>optional</em>):
 Whether to return the attention mask. If left to the default, will return the attention mask according
-to the specific tokenizer's default, defined by the :obj:<code>return_outputs</code> attribute.</p>
-<pre><code>`What are attention masks? &lt;../glossary.html#attention-mask&gt;`__
+to the specific tokenizer's default, defined by the <code>return_outputs</code> attribute.</p>
+<pre><code>[What are attention masks?](../glossary#attention-mask)
 </code></pre>
-<p>return_overflowing_tokens (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
+<p>return_overflowing_tokens (<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):
 Whether or not to return overflowing token sequences. If a pair of sequences of input ids (or a batch
-of pairs) is provided with :obj:<code>truncation_strategy = longest_first</code> or :obj:<code>True</code>, an error is
-raised instead of returning overflowing tokens.
-return_special_tokens_mask (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
+of pairs) is provided with <code>truncation_strategy = longest_first</code> or <code>True</code>, an error is raised instead
+of returning overflowing tokens.
+return_special_tokens_mask (<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):
 Whether or not to return special tokens mask information.
-return_offsets_mapping (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):
-Whether or not to return :obj:<code>(char_start, char_end)</code> for each token.</p>
-<pre><code>This is only available on fast tokenizers inheriting from
-:class:`~transformers.PreTrainedTokenizerFast`, if using Python's tokenizer, this method will raise
-:obj:&lt;code&gt;NotImplementedError&lt;/code&gt;.
+return_offsets_mapping (<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):
+Whether or not to return <code>(char_start, char_end)</code> for each token.</p>
+<pre><code>This is only available on fast tokenizers inheriting from [`PreTrainedTokenizerFast`], if using
+Python's tokenizer, this method will raise &lt;code&gt;NotImplementedError&lt;/code&gt;.
 </code></pre>
 <dl>
 <dt>return_length
-(:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>False</code>):</dt>
+(<code>bool</code>, <em>optional</em>, defaults to <code>False</code>):</dt>
 <dt>Whether or not to return the lengths of the encoded inputs.</dt>
-<dt>verbose (:obj:<code>bool</code>, <code>optional</code>, defaults to :obj:<code>True</code>):</dt>
+<dt>verbose (<code>bool</code>, <em>optional</em>, defaults to <code>True</code>):</dt>
 <dt>Whether or not to print more information and warnings.</dt>
 <dt><strong><code>**kwargs</code></strong></dt>
-<dd>passed to the :obj:<code>self.tokenize()</code> method</dd>
+<dd>passed to the <code>self.tokenize()</code> method</dd>
 </dl>
 <h2 id="return">Return</h2>
-<p>:class:<code>~transformers.BatchEncoding</code>: A :class:<code>~transformers.BatchEncoding</code> with the following fields:</p>
+<p>[<code>BatchEncoding</code>]: A [<code>BatchEncoding</code>] with the following fields:</p>
 <ul>
 <li><strong>input_ids</strong> &ndash; List of token ids to be fed to a model.</li>
 </ul>
-<p><code>What are input IDs? &lt;../glossary.html#input-ids&gt;</code>__</p>
+<p><a href="../glossary#input-ids">What are input IDs?</a></p>
 <ul>
-<li><strong>token_type_ids</strong> &ndash; List of token type ids to be fed to a model (when :obj:<code>return_token_type_ids=True</code>
-or if <code>"token_type_ids"</code> is in :obj:<code>self.model_input_names</code>).</li>
+<li><strong>token_type_ids</strong> &ndash; List of token type ids to be fed to a model (when <code>return_token_type_ids=True</code> or
+if <em>"token_type_ids"</em> is in <code>self.model_input_names</code>).</li>
 </ul>
-<p><code>What are token type IDs? &lt;../glossary.html#token-type-ids&gt;</code>__</p>
+<p><a href="../glossary#token-type-ids">What are token type IDs?</a></p>
 <ul>
 <li><strong>attention_mask</strong> &ndash; List of indices specifying which tokens should be attended to by the model (when
-:obj:<code>return_attention_mask=True</code> or if <code>"attention_mask"</code> is in :obj:<code>self.model_input_names</code>).</li>
+<code>return_attention_mask=True</code> or if <em>"attention_mask"</em> is in <code>self.model_input_names</code>).</li>
 </ul>
-<p><code>What are attention masks? &lt;../glossary.html#attention-mask&gt;</code>__</p>
+<p><a href="../glossary#attention-mask">What are attention masks?</a></p>
 <ul>
-<li><strong>overflowing_tokens</strong> &ndash; List of overflowing tokens sequences (when a :obj:<code>max_length</code> is specified and
-:obj:<code>return_overflowing_tokens=True</code>).</li>
-<li><strong>num_truncated_tokens</strong> &ndash; Number of tokens truncated (when a :obj:<code>max_length</code> is specified and
-:obj:<code>return_overflowing_tokens=True</code>).</li>
+<li><strong>overflowing_tokens</strong> &ndash; List of overflowing tokens sequences (when a <code>max_length</code> is specified and
+<code>return_overflowing_tokens=True</code>).</li>
+<li><strong>num_truncated_tokens</strong> &ndash; Number of tokens truncated (when a <code>max_length</code> is specified and
+<code>return_overflowing_tokens=True</code>).</li>
 <li><strong>special_tokens_mask</strong> &ndash; List of 0s and 1s, with 1 specifying added special tokens and 0 specifying
-regular sequence tokens (when :obj:<code>add_special_tokens=True</code> and :obj:<code>return_special_tokens_mask=True</code>).</li>
-<li><strong>length</strong> &ndash; The length of the inputs (when :obj:<code>return_length=True</code>)</li>
+regular sequence tokens (when <code>add_special_tokens=True</code> and <code>return_special_tokens_mask=True</code>).</li>
+<li><strong>length</strong> &ndash; The length of the inputs (when <code>return_length=True</code>)</li>
 </ul></div>
 <details class="source">
 <summary>
@@ -1576,6 +1578,7 @@ def text2embeddings(self, text: str) -&gt; np.ndarray:
 <li><code><a title="text_embeddings.base.EmbeddingTokenizer.pretrained_init_configuration" href="#text_embeddings.base.EmbeddingTokenizer.pretrained_init_configuration">pretrained_init_configuration</a></code></li>
 <li><code><a title="text_embeddings.base.EmbeddingTokenizer.pretrained_vocab_files_map" href="#text_embeddings.base.EmbeddingTokenizer.pretrained_vocab_files_map">pretrained_vocab_files_map</a></code></li>
 <li><code><a title="text_embeddings.base.EmbeddingTokenizer.text2embeddings" href="#text_embeddings.base.EmbeddingTokenizer.text2embeddings">text2embeddings</a></code></li>
+<li><code><a title="text_embeddings.base.EmbeddingTokenizer.truncation_side" href="#text_embeddings.base.EmbeddingTokenizer.truncation_side">truncation_side</a></code></li>
 <li><code><a title="text_embeddings.base.EmbeddingTokenizer.vocab_files_names" href="#text_embeddings.base.EmbeddingTokenizer.vocab_files_names">vocab_files_names</a></code></li>
 </ul>
 </li>
