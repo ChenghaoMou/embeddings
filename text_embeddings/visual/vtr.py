@@ -116,7 +116,7 @@ class VTRTokenizer(EmbeddingTokenizer):
         image_array = np.asarray(image)
 
         return np.squeeze(
-            sliding_window_view(image_array, (image_array.shape[0], self.window_size)),
+            sliding_window_view(image_array, (image_array.shape[0], min(self.window_size, image_array.shape[1]))),
             axis=0,
         )[:: self.stride]
 
